@@ -100,13 +100,13 @@ class ClassData:
     def __init__(self, students: List[Student]) -> None:
         self.students = students
 
-        self.fail_default_scores = self._generate_stat_scores(self._calc_average)
+        self.raw_avg_scores = self._generate_stat_scores(self._calc_average)
         self.max_scores = self._generate_stat_scores(lambda data: max(data) if data else 0)
         self.min_scores = self._generate_stat_scores(lambda data: min(data) if data else 0)
 
         self._apply_score_fixing()
 
-        self.fixed_average_scores = self._generate_fixed_stat_scores(self._calc_average)
+        self.fixed_avg_scores = self._generate_fixed_stat_scores(self._calc_average)
 
     def _generate_stat_scores(self, stat_func: Callable[[Sequence[float]], float]) -> Scores[float]:
         results: List[float] = []
@@ -130,4 +130,4 @@ class ClassData:
 
     def _apply_score_fixing(self) -> None:
         for student in self.students:
-            student.compute_fixed_score(self.fail_default_scores, self.min_scores)
+            student.compute_fixed_score(self.raw_avg_scores, self.min_scores)
