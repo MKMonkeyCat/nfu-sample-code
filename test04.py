@@ -13,6 +13,7 @@ class Student:
         self.chinese_score = chinese_score
         self.english_score = english_score
         self.math_score = math_score
+        self.average = self.calculate_average() 
 
     def calculate_average(self):
         scores = [self.chinese_score, self.english_score, self.math_score]
@@ -23,7 +24,7 @@ class Student:
         return 0.0
 
     def __str__(self):
-        return f"{self.name} (ID: {self.id}) - Chinese: {self.chinese_score}, English: {self.english_score}, Math: {self.math_score}"
+        return f"{self.name} (ID: {self.id}) - Chinese: {self.chinese_score}, English: {self.english_score}, Math: {self.math_score}, Average: {self.average:.2f}"
 
 def parse_score(text: str) -> float | None:
     text = text.strip()
