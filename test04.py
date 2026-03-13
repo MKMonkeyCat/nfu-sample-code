@@ -1,11 +1,12 @@
 class Student:
     def __init__(
-            self,
-            id_: str,
-            name: str,
-            chinese_score: float | None,    
-            english_score: float | None,    
-            math_score: float | None,):     
+        self,
+        id_: str,
+        name: str,
+        chinese_score: float | None,    
+        english_score: float | None,    
+        math_score: float | None
+    ):     
         
         self.id = id_
         self.name = name
