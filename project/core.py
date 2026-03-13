@@ -5,7 +5,6 @@ from typing import (
     List,
     Literal,
     Optional,
-    Self,
     Sequence,
     TypeVar,
 )
@@ -31,7 +30,7 @@ class Scores(Generic[_T]):
         return getattr(self, name)
 
     @classmethod
-    def from_iterable(cls, values: Iterable[_T]) -> Self:
+    def from_iterable(cls, values: Iterable[_T]) -> "Scores":
         return cls(*values)
 
     def to_list(self) -> List[_T]:
@@ -60,7 +59,7 @@ class Student:
         self.fixed_score: Scores[float]
 
     @classmethod
-    def parse_student(cls, line: str) -> Self:
+    def parse_student(cls, line: str) -> "Student":
         """解析 CSV 格式字串"""
         parts = line.strip().split(",")
         id_, name = parts[0], parts[1]
