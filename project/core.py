@@ -106,6 +106,8 @@ class ClassData:
         self._apply_score_fixing()
 
         self.fixed_avg_scores = self._generate_fixed_stat_scores(self._calc_average)
+        self.fixed_max_scores = self._generate_fixed_stat_scores(lambda data: max(data) if data else 0)
+        self.fixed_min_scores = self._generate_fixed_stat_scores(lambda data: min(data) if data else 0)
 
     def _generate_stat_scores(self, stat_func: Callable[[Sequence[float]], float]) -> Scores[float]:
         results: List[float] = []
