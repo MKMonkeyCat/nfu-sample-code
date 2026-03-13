@@ -100,5 +100,5 @@ class Student:
 
     @classmethod
     def parse_student(cls, line: str) -> "Student":
-        id_, name, *scores = line.split(",")
+        id_, name, *scores = line.strip().split(",")
         return cls(id_, name, *map(safe_parse_score, scores))

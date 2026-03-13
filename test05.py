@@ -21,7 +21,9 @@ for student in class_data.students:
 print(f"{chin:.2f} {eng:.2f} {math:.2f}")
 
 
+
 c = calc_average(class_data.students, lambda x: x.fixed_score.chinese_score)
 e = calc_average(class_data.students, lambda x: x.fixed_score.english_score)
 m = calc_average(class_data.students, lambda x: x.fixed_score.math_score)
-print(f'{c} {e} {m}')
+
+print(f'{c:.2f} {e:.2f} {m:.2f}')
