@@ -9,5 +9,6 @@ def get_data() -> list[Student]:
             data.append(Student.parse_student(line))
     return data
 
-class_data = ClassData(get_data())
-student_data: list[Student] = class_data.students
+
+global_class_data = ClassData(get_data())
+global_student_data: list[Student] = global_class_data.students
