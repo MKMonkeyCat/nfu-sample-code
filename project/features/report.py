@@ -83,5 +83,11 @@ def print_ng_students_report(data: ClassData) -> None:
     `1. 王小明   |   50.0/ 40.0/ 45.0  |  55.0/ 45.0/ 50.0 |   30.0%`
     `2. 李大華   |   40.0/ 30.0/ 35.0  |  45.0/ 35.0/ 40.0 |   20.0%`
     """
+    fail_count = 0
 
+    for s in data.students:
+        if s.fixed_average < 60:
+            fail_count = fail_count + 1
+            
+    print("不及格學生數量:", fail_count)
     # TODO 根據 data 中的學生資料計算每個學生的修正後總分，判斷是否不及格 (例如總分 < 60)，並使用 print_student_report 輸出
