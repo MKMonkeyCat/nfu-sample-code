@@ -11,4 +11,4 @@ def get_data() -> list[Student]:
 
 
 global_class_data = ClassData(get_data())
-global_student_data: list[Student] = global_class_data.students
+global_student_data = global_class_data.students

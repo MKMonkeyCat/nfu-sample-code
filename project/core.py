@@ -58,6 +58,10 @@ class Student:
 
         self.fixed_score: Scores[float]
 
+    @property
+    def fixed_total_score(self) -> float:
+        return sum(self.fixed_score.to_list())
+
     @classmethod
     def parse_student(cls, line: str) -> "Student":
         """解析 CSV 格式字串"""
@@ -109,6 +113,9 @@ class ClassData:
         self.fixed_max_scores = self._generate_fixed_stat_scores(lambda data: max(data) if data else 0)
         self.fixed_min_scores = self._generate_fixed_stat_scores(lambda data: min(data) if data else 0)
 
+        self._groups: List[List[Student]] = []
+        self._groups_map: dict[str, int] = {}  # 學生 ID -> 組別索引
+
     def _generate_stat_scores(self, stat_func: Callable[[Sequence[float]], float]) -> Scores[float]:
         results: List[float] = []
         for sub in Scores.SUBJECTS:
@@ -132,3 +139,24 @@ class ClassData:
     def _apply_score_fixing(self) -> None:
         for student in self.students:
             student.compute_fixed_score(self.raw_avg_scores, self.min_scores)
+
+    @property
+    def groups(self) -> List[List[Student]]:
+        return self._groups
+
+    @groups.setter
+    def groups(self, groups: List[List[Student]]) -> None:
+        self._groups = groups
+        self._groups_map = {}
+
+        for i, group in enumerate(groups):
+            for student in group:
+                self._groups_map[student.id] = i
+
+    def get_group_of_student(self, student_id: str) -> Optional[int]:
+        return self._groups_map.get(student_id)
+
+    def get_students_in_group(self, group_index: int) -> List[Student]:
+        if group_index < 0 or group_index >= len(self._groups):
+            raise ValueError(f"Invalid group index: {group_index}")
+        return self._groups[group_index]
