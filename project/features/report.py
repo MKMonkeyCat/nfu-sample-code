@@ -7,10 +7,16 @@ from project.utils import Style, fmt_score
 
 SEP = Style.paint("|", Style.BLUE)
 LINE = Style.paint("-" * 61, Style.BLUE)
-STUDENT_HEADER = f"{'姓名':6} {SEP} {'原始分數 (中/英/數)':10} {SEP} {'修正後分數':12} {SEP} {'平時表現'}"
+STUDENT_HEADER = f"{'姓名':6} {SEP} {'原始分數 (中/英/數)':10} {SEP} {'修正後分數':12} {SEP} {'平時表現'} {SEP} {'排名'}"
 
 
-def print_student_report(s: Student) -> None:
+
+
+
+
+
+
+def print_student_report(s: Student,class_data:'ClassData') -> None:
     """
     列出單一學生的報告，包含姓名、原始分數、修正後分數和平時表現與個人平均
     format demo:
@@ -22,23 +28,58 @@ def print_student_report(s: Student) -> None:
     fixed_str = "/".join(map(fmt_score, s.fixed_score.to_list()))
 
     # 根據學生的努力程度 (effort_ratio) 決定顏色，90% 以上為綠色，否則使用預設顏色
+  
     effort_color = Style.GREEN if s.effort_ratio >= 0.9 else ""
     effort_str = Style.paint(f"{s.effort_ratio:7.1%}", effort_color)
-    
+
     # 呼叫 core.py 裡的屬性
-    avg_str = fmt_score(s.fixed_average)
+    
+    avg = sum(s.fixed_score.to_list()) / 3
+
+    #排名
+
+    #sorted_students = sorted(
+     #   all_students,key=lambda x: sum(x.fixed_score.to_list()) / 3, reverse=True
+    #)
+    #rank = sorted_students.index(s) + 1
+    
+
 
     # TODO 添加學生的平均分數和排名等資訊，讓報告更完整
-    print(f"{s.name:5} {SEP}  {raw_str}  {SEP} {fixed_str} {SEP} {effort_str} {SEP} {avg_str}")
+    #print(
+    #    f"{s.name:5} {SEP} {raw_str} {SEP} {fixed_str} {SEP} {fmt_score(avg)} {SEP} {effort_str} {SEP} Rank:{rank}"
+   # )
+
+        # --- 計算並列排名 ---
+    # 先計算每個學生的平均分數
+    avg_list = [(stud, sum(stud.fixed_score.to_list()) / 3) for stud in class_data.students]
+    # 依平均分數高到低排序
+    avg_list.sort(key=lambda x: x[1], reverse=True)
+
+    rank = 1
+    last_score = None
+    same_rank_count = 0
+    student_rank = None
+
+    for i, (stud, score) in enumerate(avg_list):
+        if score == last_score:
+            same_rank_count += 1
+        else:
+            rank = i + 1
+            same_rank_count = 1
+            last_score = score
+
+        if stud == s:
+            student_rank = rank
+            break
+
+    # 印出完整報告
+    print(
+        f"{s.name:5} {SEP} {raw_str} {SEP} {fixed_str} {SEP} {fmt_score(avg)} {SEP} {effort_str} {SEP} Rank: {student_rank}"
+    )
 
 
-    for _ in Student.
-
-
-
-
-
-def print_all_students_report(data: ClassData) -> None:
+def print_all_students_report(Class_Data:ClassData) -> None:
     """
     列出所有學生的報告，包含姓名、原始分數、修正後分數和平時表現
     同時在底部列出各科目的平均分數，原始分數和修正後分數分開顯示
@@ -48,8 +89,8 @@ def print_all_students_report(data: ClassData) -> None:
     print(LINE)
 
     # 將所有學生抓出，由 `print_student_report` 統一輸出
-    for s in data.students:
-        print_student_report(s)
+    for s in Class_Data.students:
+        print_student_report(s,Class_Data)
 
 
 def print_class_report(data: ClassData) -> None:
@@ -62,49 +103,41 @@ def print_class_report(data: ClassData) -> None:
     """
 
     # TODO 根據 data 中的學生資料計算各科目的平均分、最高分和最低分，並使用 fmt_score 格式化顏色後輸出
-    max_scores = data.fixed_max_scores
-    avg_socres = data.fixed_avg_scores
-    top_chin = max_scores.chinese
-    top_eng = max_scores.english
-    top_math = max_scores.math
-    avg_chin = avg_socres.chinese
-    avg_eng = avg_socres.english
-    avg_math = avg_socres.math
     
     
 
-    print("\n" + Style.BOLD + "Class Stats (Fixed Scores)" + Style.RESET)
+    print("\n" + Style.BOLD + "班級平均,最高及最低分數 (Fixed Scores)" + Style.RESET)
     avg = data.fixed_avg_scores
-    max_ = data.fixed_max_scores
-    min_ = data.fixed_min_scores
+    max = data.fixed_max_scores
+    min = data.fixed_min_scores
     def fmt_scores(scores:Scores[float]):
-        return f"{fmt_score(scores.chinese)} {fmt_score(scores.english)} {fmt_score(scores.math)}")
+        return f"{fmt_score(scores.chinese)} {fmt_score(scores.english)} {fmt_score(scores.math)}"
 
-    print(f"{'Average':>16} "+ fmt_scores())
-    print(f"{'max':>16} "+ fmt_scores())
-    print(f"{'min':>16} "+ fmt_scores())
+    print(f"{'Average':>16} "+ fmt_scores(avg))
+    print(f"{'max':>16} "+ fmt_scores(max))
+    print(f"{'min':>16} "+ fmt_scores(min))
     
     
 
 
 
-def print_top_n_students_report(data: ClassData, n: int = 3) -> None:
+def print_top_n_students_report(Class_data: ClassData, n: int = 3) -> None:
     """
     列出前 N 名學生的報告，根據修正後的總分排序，包含姓名、原始分數、修正後分數和平時表現
     """
-    sorted_students = sorted(data.students, key=lambda s: s.fixed_total_score, reverse=True)
+    sorted_students = sorted(Class_data.students, key=lambda s: s.fixed_total_score, reverse=True)
 
     top_students = sorted_students[:n]
 
     print(f"\n班級前 {n} 名排行榜")
 
     for s in top_students:
-        print_student_report(s)
+        print_student_report(s,Class_data)
 
     # TODO 根據 data 中的學生資料計算每個學生的修正後總分，排序後取前 N 名，並使用 print_student_report 輸出
 
 
-def print_ng_students_report(data: ClassData) -> None:
+def print_ng_students_report(Class_data: ClassData) -> None:
     """
     列出不及格學生的報告，根據修正後的總分判斷是否不及格，包含姓名、原始分數、修正後分數和平時表現
     format demo:
@@ -113,3 +146,4 @@ def print_ng_students_report(data: ClassData) -> None:
     """
 
     # TODO 根據 data 中的學生資料計算每個學生的修正後總分，判斷是否不及格 (例如總分 < 60)，並使用 print_student_report 輸出
+    #打print_student_report(s)記得幫我加Class_data
