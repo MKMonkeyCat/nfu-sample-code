@@ -22,4 +22,5 @@ class Style:
 
     @staticmethod
     def paint(text: str, style_code: str) -> str:
+        """將指定的樣式套用到文字上，並在結尾重置樣式，確保不影響後續輸出"""
         return f"{style_code}{text}{Style.RESET}"

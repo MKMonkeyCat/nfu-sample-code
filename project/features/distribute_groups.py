@@ -1,5 +1,5 @@
 """
-分組系統
+分組功能的實作
 """
 
 from project.core import ClassData

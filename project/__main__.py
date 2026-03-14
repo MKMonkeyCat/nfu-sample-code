@@ -1,3 +1,7 @@
+"""
+主程式入口，負責啟動整個應用並提供一個主選單讓用戶選擇功能
+"""
+
 from .core import ClassData, Scores
 from .features.distribute_groups import run_grouping
 from .features.report import (
@@ -14,6 +18,14 @@ from .ui.utils import clear_screen
 
 
 def main() -> None:
+    """
+    主程式入口，負責啟動整個應用並提供一個主選單讓用戶選擇功能
+    1. 從 CSV 檔案讀取學生資料並初始化 ClassData 物件
+    2. 顯示主選單，讓用戶選擇功能 (分組、報表、退出)
+    3. 根據用戶選擇的功能進入相應的子選單
+    4. 根據用戶選擇的報表類型顯示相應的報表
+    5. 用戶可以隨時返回主選單或退出應用
+    """
     class_data = ClassData.from_file("data/student_scores_100_missing.csv")
 
     clear_screen()
@@ -63,7 +75,6 @@ def main() -> None:
             elif report_mode == "不及格組別報告":
                 print_bad_group_report(class_data)
             elif report_mode == "返回上層選單":
-                clear_screen()
                 continue
         elif base_mode == "退出":
             print("\nBye~")
