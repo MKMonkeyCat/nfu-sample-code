@@ -3,12 +3,20 @@
 """
 
 from .core import ClassData
-from .features.report import print_all_students_report
+from .features.report import (
+    print_all_students_report,
+    print_class_report,
+    print_ng_students_report,
+    print_top_n_students_report,
+)
 
 
 def main() -> None:
     class_data = ClassData.from_file("data/student_scores_100_missing.csv")
     print_all_students_report(class_data)
+    print_class_report(class_data)
+    print_top_n_students_report(class_data)
+    print_ng_students_report(class_data)
 
 
 if __name__ == "__main__":

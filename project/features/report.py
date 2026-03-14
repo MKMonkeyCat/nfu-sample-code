@@ -55,7 +55,7 @@ def print_class_report(data: ClassData) -> None:
     # TODO 根據 data 中的學生資料計算各科目的平均分、最高分和最低分，並使用 fmt_score 格式化顏色後輸出
 
 
-def print_top_n_students_report(data: ClassData, n: int) -> None:
+def print_top_n_students_report(data: ClassData, n: int = 3) -> None:
     """
     列出前 N 名學生的報告，根據修正後的總分排序，包含姓名、原始分數、修正後分數和平時表現
     format demo:
