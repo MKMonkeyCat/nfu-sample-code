@@ -7,12 +7,12 @@ from project.utils import Style, fmt_score
 
 SEP = Style.paint("|", Style.BLUE)
 LINE = Style.paint("-" * 61, Style.BLUE)
-STUDENT_HEADER = f"{'姓名':6} {SEP} {'原始分數 (中/英/數)':10} {SEP} {'修正後分數':12} {SEP} {'平時表現'}"
+STUDENT_HEADER = f"{'姓名':6} {SEP} {'原始分數 (中/英/數)':10} {SEP} {'修正後分數':12} {SEP} {'平時表現'} {SEP} {'個人平均'}"
 
 
 def print_student_report(s: Student) -> None:
     """
-    列出單一學生的報告，包含姓名、原始分數、修正後分數和平時表現
+    列出單一學生的報告，包含姓名、原始分數、修正後分數和平時表現與個人平均
     format demo:
     `羅志遠   |   66.0/ 59.0/ 83.0  |  66.0/ 59.0/ 83.0 |   50.0%`
     """
@@ -25,8 +25,14 @@ def print_student_report(s: Student) -> None:
     effort_color = Style.GREEN if s.effort_ratio >= 0.9 else ""
     effort_str = Style.paint(f"{s.effort_ratio:7.1%}", effort_color)
 
+    fixed_scores_list = s.fixed_score.to_list()
+
+    avg_val = sum(fixed_scores_list) / len(fixed_scores_list)
+
+    avg_str = fmt_score(avg_val)
+
     # TODO 添加學生的平均分數和排名等資訊，讓報告更完整
-    print(f"{s.name:5} {SEP}  {raw_str}  {SEP} {fixed_str} {SEP} {effort_str}")
+    print(f"{s.name:5} {SEP}  {raw_str}  {SEP} {fixed_str} {SEP} {effort_str} {SEP} {avg_str}")
 
 
 def print_all_students_report(data: ClassData) -> None:
