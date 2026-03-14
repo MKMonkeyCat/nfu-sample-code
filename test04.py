@@ -47,14 +47,30 @@ def main():
     for student in data[:5]:
         print(str(student))
 
-    print("## ")
+    print("---")
 
+    # 把平均由大到小排序
     ranked_students = sorted(data, key = lambda x: x.calculate_average(), reverse=True)
 
-    print("小組平均成績與排名")
+    print("##小組平均成績與排名")
     for rank, student in enumerate(ranked_students, 1):
         avg = student.calculate_average()
         print(f"第 {rank} 名: {student.name}, 平均分: {avg:.2f}")
+
+    print("---")
+
+    print("##成績分析報告")
+    all_averages = [s.calculate_average() for s in data]
+    class_avg = sum(all_averages) / len(all_averages) if all_averages else 0
+
+    print(f"全班平均分數{class_avg}")
+
+    print(f"前三名學生：")
+    for i, student in enumerate(ranked_students[:3], 1):
+        print(f"第{i}名 {student}")
+    
+    fail_student = [s for s in data if s.calculate_average() < 60]
+    print(f"不及格學生數量共 {len(fail_student)} 個人")
 
 
 if __name__ == "__main__":
