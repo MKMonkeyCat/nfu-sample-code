@@ -61,11 +61,15 @@ def print_class_report(data: ClassData) -> None:
 def print_top_n_students_report(data: ClassData, n: int = 3) -> None:
     """
     列出前 N 名學生的報告，根據修正後的總分排序，包含姓名、原始分數、修正後分數和平時表現
-    format demo:
-    `1. 羅志遠   |   66.0/ 59.0/ 83.0  |  66.0/ 59.0/ 83.0 |   50.0%`
-    `2. 林小明   |   80.0/ 85.0/ 90.0  |  85.0/ 80.0/ 95.0 |   80.0%`
-    `3. 張大華   |   70.0/ 75.0/ 80.0  |  75.0/ 70.0/ 85.0 |   60.0%`
     """
+    sorted_students = sorted(data.students, key=lambda s: s.fixed_total_score, reverse=True)
+
+    top_students = sorted_students[:n]
+
+    print(f"\n班級前 {n} 名排行榜")
+
+    for s in top_students:
+        print_student_report(s)
 
     # TODO 根據 data 中的學生資料計算每個學生的修正後總分，排序後取前 N 名，並使用 print_student_report 輸出
 
