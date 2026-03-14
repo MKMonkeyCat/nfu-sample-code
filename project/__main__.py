@@ -1,68 +1,85 @@
-from typing import Optional
+"""
+主程式入口，負責啟動整個應用並提供一個主選單讓用戶選擇功能
+"""
 
-from project.core import ClassData, Scores
-from project.data import global_class_data
-
-# ANSI 顏色定義
-CLR_RESET = "\033[0m"
-CLR_BOLD = "\033[1m"
-CLR_GRAY = "\033[90m"
-CLR_CYAN = "\033[36m"
-CLR_YELLOW = "\033[33m"
-CLR_RED = "\033[31m"  # 用於不及格
-CLR_GREEN = "\033[32m"  # 用於表現優異
-CLR_BLUE = "\033[34m"  # 用於表格格線
-
-
-def fmt(v: Optional[float], color: str = "") -> str:
-    if v is None:
-        return f"{CLR_GRAY}---.-{CLR_RESET}"
-
-    display_color = color
-    if not color:
-        if v < 60:
-            display_color = CLR_RED
-        elif v >= 90:
-            display_color = CLR_GREEN
-        elif v >= 80:
-            display_color = CLR_YELLOW
-
-    text = f"{v:5.1f}"
-    return f"{display_color}{text}{CLR_RESET}" if display_color else text
+from .core import ClassData, Scores
+from .features.distribute_groups import run_grouping
+from .features.report import (
+    print_all_students_report,
+    print_bad_group_report,
+    print_class_report,
+    print_effort_report,
+    print_subject_top_report,
+    print_top_group_report,
+    print_top_students_report,
+)
+from .ui import SingleChoiceSelector
+from .ui.utils import clear_screen
 
 
-def print_report(data: ClassData):
-    sep = f"{CLR_BLUE}|{CLR_RESET}"
-    line = f"{CLR_BLUE}{'-' * 80}{CLR_RESET}"
+def main() -> None:
+    """
+    主程式入口，負責啟動整個應用並提供一個主選單讓用戶選擇功能
+    1. 從 CSV 檔案讀取學生資料並初始化 ClassData 物件
+    2. 顯示主選單，讓用戶選擇功能 (分組、報表、退出)
+    3. 根據用戶選擇的功能進入相應的子選單
+    4. 根據用戶選擇的報表類型顯示相應的報表
+    5. 用戶可以隨時返回主選單或退出應用
+    """
+    class_data = ClassData.from_file("data/student_scores_100_missing.csv")
 
-    header = f"{'姓名':<11} {sep} {'原始分數 (中/英/數)':<18} {sep} {'修正後分數':<20} {sep} {'平時表現'}"
+    clear_screen()
+    while True:
+        base_mode = SingleChoiceSelector(
+            "請選擇功能",
+            ["分組", "報表", "退出"],
+        ).ask()
 
-    print(f"{CLR_BOLD}{header}{CLR_RESET}")
-    print(line)
+        clear_screen()
 
-    for s in data.students:
-        raw_parts = [fmt(v) for v in s.scores.to_list()]
-        raw_str = "/".join(raw_parts)
+        if base_mode == "分組":
+            run_grouping(class_data)
+        elif base_mode == "報表":
+            report_mode = SingleChoiceSelector(
+                "請選擇報表類型",
+                [
+                    "學生報告",  # print_all_students_report
+                    "班級報告",  # print_class_report
+                    "前 N 名學生",  # print_top_students_report
+                    "努力程度報告",  # print_effort_report
+                    "科目前 N 名學生",  # print_subject_top_report
+                    "前 N 組報告",  # print_top_group_report
+                    "不及格組別報告",  # print_bad_group_report
+                    "返回上層選單",
+                ],
+            ).ask()
 
-        fixed_parts = [fmt(v, CLR_CYAN) for v in s.fixed_score.to_list()]
-        fixed_str = "/".join(fixed_parts)
+            clear_screen()
 
-        effort_color = CLR_GREEN if s.effort_ratio >= 0.9 else ""
-        effort_str = f"{effort_color}{s.effort_ratio:7.1%}{CLR_RESET}"
-
-        print(f"{s.name:10} {sep} {raw_str} {sep} {fixed_str} {sep} {effort_str}")
-
-    print(line)
-
-    raw_avg_parts = [fmt(data.raw_avg_scores.get_by_name(sub)) for sub in Scores.SUBJECTS]
-    raw_avg_str = "/".join(raw_avg_parts)
-
-    fixed_avg_parts = [fmt(data.fixed_avg_scores.get_by_name(sub), CLR_YELLOW) for sub in Scores.SUBJECTS]
-    fixed_avg_str = "/".join(fixed_avg_parts)
-
-    footer_label = f"{CLR_BOLD}平均分數{CLR_RESET}"
-    print(f"{footer_label:18} {sep} {raw_avg_str} {sep} {fixed_avg_str} {sep}")
+            if report_mode == "學生報告":
+                print_all_students_report(class_data)
+            elif report_mode == "班級報告":
+                print_class_report(class_data)
+            elif report_mode == "前 N 名學生":
+                print_top_students_report(class_data)
+            elif report_mode == "努力程度報告":
+                print_effort_report(class_data)
+            elif report_mode == "科目前 N 名學生":
+                subject = SingleChoiceSelector(
+                    "請選擇科目",
+                    Scores.SUBJECTS,
+                ).ask()
+                print_subject_top_report(class_data, subject)
+            elif report_mode == "前 N 組報告":
+                print_top_group_report(class_data)
+            elif report_mode == "不及格組別報告":
+                print_bad_group_report(class_data)
+            elif report_mode == "返回上層選單":
+                continue
+        elif base_mode == "退出":
+            print("\nBye~")
+            break
 
 
 if __name__ == "__main__":
-    print_report(global_class_data)
+    main()
