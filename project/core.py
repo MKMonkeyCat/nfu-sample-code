@@ -117,6 +117,16 @@ class Student:
 
         self.fixed_score = Scores.from_iterable(fixed_vals)
 
+        @property
+        def fixed_total_score(self) -> float:
+            """取得學生的修正後總分"""
+            return sum(self.fixed_score.to_list())
+        
+        @property
+        def fixed_average(self) -> float:
+            """取得學生修正後平均"""
+            vals = self.fixed_score.to_list()
+            return sum(vals) / len(vals)
 
 class ClassData:
     def __init__(self, students: List[Student]) -> None:

@@ -7,7 +7,7 @@ from project.utils import Style, fmt_score
 
 SEP = Style.paint("|", Style.BLUE)
 LINE = Style.paint("-" * 61, Style.BLUE)
-STUDENT_HEADER = f"{'姓名':6} {SEP} {'原始分數 (中/英/數)':10} {SEP} {'修正後分數':12} {SEP} {'平時表現'} {SEP} {'個人平均'}"
+STUDENT_HEADER = f"{'姓名':6} {SEP} {'原始分數 (中/英/數)':10} {SEP} {'修正後分數':12} {SEP} {'平時表現'}"
 
 
 def print_student_report(s: Student) -> None:
@@ -24,12 +24,9 @@ def print_student_report(s: Student) -> None:
     # 根據學生的努力程度 (effort_ratio) 決定顏色，90% 以上為綠色，否則使用預設顏色
     effort_color = Style.GREEN if s.effort_ratio >= 0.9 else ""
     effort_str = Style.paint(f"{s.effort_ratio:7.1%}", effort_color)
-
-    fixed_scores_list = s.fixed_score.to_list()
-
-    avg_val = sum(fixed_scores_list) / len(fixed_scores_list)
-
-    avg_str = fmt_score(avg_val)
+    
+    # 呼叫 core.py 裡的屬性
+    avg_str = fmt_score(s.fixed_average)
 
     # TODO 添加學生的平均分數和排名等資訊，讓報告更完整
     print(f"{s.name:5} {SEP}  {raw_str}  {SEP} {fixed_str} {SEP} {effort_str} {SEP} {avg_str}")
