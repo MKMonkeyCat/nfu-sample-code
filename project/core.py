@@ -72,11 +72,6 @@ class Student:
         # 在 compute_fixed_score 方法中會根據原始分數、平均分、最低分和努力程度來計算修正分數，並將結果存儲在這個屬性中
         self.fixed_score: Scores[float]
 
-    @property
-    def fixed_total_score(self) -> float:
-        """計算修正後的總分，將三科的修正後分數相加，返回一個浮點數作為總分"""
-        return sum(self.fixed_score.to_list())
-
     @classmethod
     def parse_student(cls, line: str) -> "Student":
         """解析 CSV 格式字串"""
@@ -150,10 +145,6 @@ class ClassData:
         # 最低分的計算邏輯類似，使用 min 函數來獲取每科的修正後最低分，這些數據將用於報表生成和分組邏輯等功能
         self.fixed_min_scores = self._generate_fixed_stat_scores(min)
 
-        # 用來儲存分組結果，使用時請用 `groups` 屬性來訪問和修改分組結果，這樣可以確保內部的 groups_map 也會被正確更新
-        self._groups: List[List[Student]] = []
-        self._groups_map: dict[str, int] = {}  # 學生 ID -> 組別索引
-
     def _generate_stat_scores(self, stat_func: Callable[[Sequence[float]], float]) -> Scores[float]:
         """
         根據提供的統計函數 (例如平均分、最高分、最低分等) 來生成每科的統計數據，返回一個 Scores 物件，其中包含每科的統計結果
@@ -179,7 +170,7 @@ class ClassData:
         # 與上方的 _generate_stat_scores 類似
         # 不過這裡是基於學生的修正後分數 (fixed_score) 來計算統計數據
         for sub in Scores.SUBJECTS:
-            all_values: List[float] = [s.fixed_score.get_by_name(sub) for s in self.students]
+            all_values = [s.fixed_score.get_by_name(sub) for s in self.students]
             results.append(stat_func(all_values))
         return Scores.from_iterable(results)
 
@@ -196,34 +187,6 @@ class ClassData:
         # 這樣在後續的報表生成和分組邏輯中就可以直接使用修正後的分數來進行操作，而不需要每次都重新計算
         for student in self.students:
             student.compute_fixed_score(self.raw_avg_scores, self.min_scores)
-
-    # 這個裝飾器表示這個方法是屬性方法
-    # 可以像訪問屬性一樣訪問和修改分組結果，當設置分組結果時會自動更新內部的 groups_map 以便快速查詢學生所在的組別
-    @property
-    def groups(self) -> List[List[Student]]:
-        return self._groups
-
-    # 這是 groups 屬性的 setter 方法
-    @groups.setter
-    def groups(self, groups: List[List[Student]]) -> None:
-        """設置分組結果，並自動更新內部的 groups_map 以便快速查詢學生所在的組別"""
-        self._groups = groups
-
-        # 直接重新生成 groups_map，防止 dirty data
-        self._groups_map = {}
-        for i, group in enumerate(groups):
-            for student in group:
-                self._groups_map[student.id] = i
-
-    def get_group_of_student(self, student_id: str) -> Optional[int]:
-        """根據學生 ID 查詢該學生所在的組別索引，如果學生不在任何組別中則返回 None"""
-        return self._groups_map.get(student_id)
-
-    def get_students_in_group(self, group_index: int) -> List[Student]:
-        """根據組別索引查詢該組別中的學生列表，如果索引無效則拋出 ValueError"""
-        if group_index < 0 or group_index >= len(self._groups):
-            raise ValueError(f"Invalid group index: {group_index}")
-        return self._groups[group_index]
 
     # 這個裝飾器表示這個方法是類方法 (classmethod)，第一個參數是類別本身 (cls)，而不是實例
     # 可以通過類別名稱來調用，這裡用於從 CSV 文件中讀取學生資料並創建 ClassData 物件的邏輯
