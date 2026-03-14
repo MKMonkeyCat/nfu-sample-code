@@ -6,8 +6,8 @@ from project.core import ClassData, Student
 from project.utils import Style, fmt_score
 
 SEP = Style.paint("|", Style.BLUE)
-LINE = Style.paint("-" * 61, Style.BLUE)
-STUDENT_HEADER = f"{'姓名':6} {SEP} {'原始分數 (中/英/數)':10} {SEP} {'修正後分數':12} {SEP} {'平時表現'}"
+LINE = Style.paint("-" * 73, Style.BLUE)
+STUDENT_HEADER = f"{'姓名':6} {SEP} {'原始分數 (中/英/數)':10} {SEP} {'修正後分數':12} {SEP} {'平時表現'} {SEP} {"個別平均"}"
 
 
 def print_student_report(s: Student) -> None:
@@ -70,6 +70,8 @@ def print_top_n_students_report(data: ClassData, n: int = 3) -> None:
 
     for s in top_students:
         print_student_report(s)
+
+    print(LINE)
 
     # TODO 根據 data 中的學生資料計算每個學生的修正後總分，排序後取前 N 名，並使用 print_student_report 輸出
 
