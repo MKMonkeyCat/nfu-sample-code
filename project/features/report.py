@@ -1,4 +1,4 @@
-from project.core import ClassData, Scores, Student, SubjectName
+from project.core import ClassData, Student, SubjectName
 from project.ui.style import Style
 from project.utils import fmt_score
 

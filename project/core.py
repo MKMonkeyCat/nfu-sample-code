@@ -160,3 +160,12 @@ class ClassData:
         if group_index < 0 or group_index >= len(self._groups):
             raise ValueError(f"Invalid group index: {group_index}")
         return self._groups[group_index]
+
+    @classmethod
+    def from_file(cls, path: str) -> "ClassData":
+        data: list[Student] = []
+        with open(path, encoding="utf-8") as f:
+            next(f)
+            for line in f:
+                data.append(Student.parse_student(line))
+        return cls(data)
