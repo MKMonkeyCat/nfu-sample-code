@@ -22,7 +22,7 @@ def print_student_report(s: Student,class_data:'ClassData') -> None:
     format demo:
     `羅志遠   |   66.0/ 59.0/ 83.0  |  66.0/ 59.0/ 83.0 |   50.0%`
     """
-    
+
     # 將每個成績使用 fmt_score 格式化顏色後已 '/' 插入兩兩之間
     raw_str = "/".join(map(fmt_score, s.scores.to_list()))
     fixed_str = "/".join(map(fmt_score, s.fixed_score.to_list()))
@@ -95,7 +95,7 @@ def print_all_students_report(Class_Data:ClassData) -> None:
 
 def print_class_report(data: ClassData) -> None:
     """
-    列等出班級整體的報告，包含每科目的平均分數、最高分數、最低分數統計資訊
+    列出班級整體的報告，包含每科目的平均分數、最高分數、最低分數等統計資訊
     format demo:
     `平均分數 |  70.0/ 65.0/ 80.0  |  75.0/ 70.0/ 85.0`
     `最高分數 |  95.0/ 90.0/ 98.0  | 100.0/100.0/100.0`
@@ -134,6 +134,8 @@ def print_top_n_students_report(Class_data: ClassData, n: int = 3) -> None:
     for s in top_students:
         print_student_report(s,Class_data)
 
+    print(LINE)
+
     # TODO 根據 data 中的學生資料計算每個學生的修正後總分，排序後取前 N 名，並使用 print_student_report 輸出
 
 
@@ -144,6 +146,12 @@ def print_ng_students_report(Class_data: ClassData) -> None:
     `1. 王小明   |   50.0/ 40.0/ 45.0  |  55.0/ 45.0/ 50.0 |   30.0%`
     `2. 李大華   |   40.0/ 30.0/ 35.0  |  45.0/ 35.0/ 40.0 |   20.0%`
     """
+    fail_count = 0
 
+    for s in Class_data.students:
+        if s.fixed_average < 60:
+            fail_count = fail_count + 1
+            
+    print("不及格學生數量:", fail_count)
     # TODO 根據 data 中的學生資料計算每個學生的修正後總分，判斷是否不及格 (例如總分 < 60)，並使用 print_student_report 輸出
     #打print_student_report(s)記得幫我加Class_data
