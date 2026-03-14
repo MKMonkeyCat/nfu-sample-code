@@ -2,7 +2,7 @@
 報告模組，包含各種報告的生成函數
 """
 
-from project.core import ClassData, Student
+from project.core import ClassData, Scores, Student
 from project.utils import Style, fmt_score
 
 SEP = Style.paint("|", Style.BLUE)
@@ -16,7 +16,7 @@ def print_student_report(s: Student) -> None:
     format demo:
     `羅志遠   |   66.0/ 59.0/ 83.0  |  66.0/ 59.0/ 83.0 |   50.0%`
     """
-
+    
     # 將每個成績使用 fmt_score 格式化顏色後已 '/' 插入兩兩之間
     raw_str = "/".join(map(fmt_score, s.scores.to_list()))
     fixed_str = "/".join(map(fmt_score, s.fixed_score.to_list()))
@@ -30,6 +30,12 @@ def print_student_report(s: Student) -> None:
 
     # TODO 添加學生的平均分數和排名等資訊，讓報告更完整
     print(f"{s.name:5} {SEP}  {raw_str}  {SEP} {fixed_str} {SEP} {effort_str} {SEP} {avg_str}")
+
+
+    for _ in Student.
+
+
+
 
 
 def print_all_students_report(data: ClassData) -> None:
@@ -48,7 +54,7 @@ def print_all_students_report(data: ClassData) -> None:
 
 def print_class_report(data: ClassData) -> None:
     """
-    列出班級整體的報告，包含每科目的平均分數、最高分數、最低分數等統計資訊
+    列等出班級整體的報告，包含每科目的平均分數、最高分數、最低分數統計資訊
     format demo:
     `平均分數 |  70.0/ 65.0/ 80.0  |  75.0/ 70.0/ 85.0`
     `最高分數 |  95.0/ 90.0/ 98.0  | 100.0/100.0/100.0`
@@ -56,6 +62,30 @@ def print_class_report(data: ClassData) -> None:
     """
 
     # TODO 根據 data 中的學生資料計算各科目的平均分、最高分和最低分，並使用 fmt_score 格式化顏色後輸出
+    max_scores = data.fixed_max_scores
+    avg_socres = data.fixed_avg_scores
+    top_chin = max_scores.chinese
+    top_eng = max_scores.english
+    top_math = max_scores.math
+    avg_chin = avg_socres.chinese
+    avg_eng = avg_socres.english
+    avg_math = avg_socres.math
+    
+    
+
+    print("\n" + Style.BOLD + "Class Stats (Fixed Scores)" + Style.RESET)
+    avg = data.fixed_avg_scores
+    max_ = data.fixed_max_scores
+    min_ = data.fixed_min_scores
+    def fmt_scores(scores:Scores[float]):
+        return f"{fmt_score(scores.chinese)} {fmt_score(scores.english)} {fmt_score(scores.math)}")
+
+    print(f"{'Average':>16} "+ fmt_scores())
+    print(f"{'max':>16} "+ fmt_scores())
+    print(f"{'min':>16} "+ fmt_scores())
+    
+    
+
 
 
 def print_top_n_students_report(data: ClassData, n: int = 3) -> None:
