@@ -28,11 +28,11 @@ class Scores(Generic[_T]):
         self.english = english
         self.math = math
 
-    def get_by_name(self, name: SubjectName) -> _T:
+    def get_by_name(self, subject: SubjectName) -> _T:
         """根據科目名稱返回對應的成績值，如果名稱無效則拋出 ValueError"""
-        if name not in self.SUBJECTS:
-            raise ValueError(f"Invalid subject name: {name}")
-        return getattr(self, name)
+        if subject not in self.SUBJECTS:
+            raise ValueError(f"Invalid subject name: {subject}")
+        return getattr(self, subject)
 
     @classmethod
     def from_iterable(cls, values: Iterable[_T]) -> "Scores":
