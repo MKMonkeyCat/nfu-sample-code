@@ -6,7 +6,7 @@ from project.core import ClassData, Scores, Student
 from project.utils import Style, fmt_score
 
 SEP = Style.paint("|", Style.BLUE)
-LINE = Style.paint("-" * 45, Style.BLUE)
+LINE = Style.paint("-" * 46, Style.BLUE)
 STUDENT_HEADER = f"排名 {SEP} {'姓名':6} {SEP} {'修正後分數':12} {SEP} 平均成績"
 
 
@@ -35,28 +35,7 @@ def print_student_report(s: Student, class_data: "ClassData") -> None:
     #    f"{s.name:5} {SEP} {raw_str} {SEP} {fixed_str} {SEP} {fmt_score(avg)} {SEP} {effort_str} {SEP} Rank:{rank}"
     # )
 
-    # --- 計算並列排名 ---
-    # 先計算每個學生的平均分數
-    avg_list = [(stud, sum(stud.fixed_score.to_list()) / 3) for stud in class_data.students]
-    # 依平均分數高到低排序
-    avg_list.sort(key=lambda x: x[1], reverse=True)
-
-    rank = 1
-    last_score = None
-    same_rank_count = 0
-    student_rank = None
-
-    for i, (stud, score) in enumerate(avg_list):
-        if score == last_score:
-            same_rank_count += 1
-        else:
-            rank = i + 1
-            same_rank_count = 1
-            last_score = score
-
-        if stud == s:
-            student_rank = rank
-            break
+    student_rank = class_data.fixed_sorted_students.index(s) + 1
 
     # 印出完整報告
     print(f"{student_rank:4} {SEP} {s.name:5} {SEP} {fixed_str} {SEP}    {fmt_score(avg)}")
@@ -99,9 +78,7 @@ def print_top_n_students_report(class_data: ClassData, n: int = 3) -> None:
     """
     列出前 N 名學生的報告，根據修正後的總分排序，包含姓名、原始分數、修正後分數和平時表現
     """
-    sorted_students = sorted(class_data.students, key=lambda s: s.fixed_total_score, reverse=True)
-
-    top_students = sorted_students[:n]
+    top_students = class_data.fixed_sorted_students[:n]
 
     print(f"\n班級前 {n} 名排行榜")
 
