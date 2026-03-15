@@ -12,7 +12,7 @@
 
 ---
 
-# 一、資料結構
+## 一、資料結構
 
 建立一個 `Student` 物件後，資料結構如下：
 ```mermaid
@@ -30,9 +30,9 @@ Student
 -> 存放 **原始成績**
 
 `fixed_score`
-→ 存放 **修正後成績**
+-> 存放 **修正後成績**
 
-# 二、初始化 (`__init__`)
+## 二、初始化 (`__init__`)
 
 ```python
 def __init__(
@@ -76,7 +76,7 @@ Student
 └─ effort_ratio = 0.5
 ```
 
-# 三、CSV 轉換 Student (`parse_student`)
+## 三、CSV 轉換 Student (`parse_student`)
 ```python
 @classmethod
 def parse_student(cls, line: str)
@@ -115,7 +115,7 @@ split(",")
 Student("A01","Tom",90,80,None)
 ```
 
-# 四、計算修正分數 (`compute_fixed_score`)
+## 四、計算修正分數 (`compute_fixed_score`)
 如果某科缺考 (`None`)，就會計算補分
 
 補分公式：
@@ -132,7 +132,7 @@ def compute_fixed_score(self, avg_scores, min_scores)
 * 班級最低分
 * 學生努力比例
 
-## 努力比例 (`effort_ratio`)
+### 努力比例 (`effort_ratio`)
 | **ratio** | **結果** |
 | :--- | :--- |
 | 1.0 | 平均分 |
@@ -141,19 +141,20 @@ def compute_fixed_score(self, avg_scores, min_scores)
 | >1 | 超過平均 |
 | <0 | 低於最低 |
 
-## 計算流程
+### 計算流程
 ```mermaid
 遍歷三科
    │
    ▼
 取得原始分數
    │
-   ├─ 有分數 → 直接使用
+   ├ 有分數 → 直接使用
    │
-   └─ 缺考
+   └---缺考
         │
         ▼
-  使用公式計算修正分
+  根據平均分、最低分與努力比例
+  計算補分
         │
         ▼
 加入 fixed_vals
@@ -162,21 +163,21 @@ def compute_fixed_score(self, avg_scores, min_scores)
 建立 fixed_score
 ```
 
-# 五、`fixed_total_score`
+## 五、`fixed_total_score`
 ```python
 @property
 def fixed_total_score(self)
 ```
 > 取得 **修正後總分**
 
-# 六、`fixed_average`
+## 六、`fixed_average`
 ```python
 @property
 def fixed_average(self)
 ```
 > 取得 **修正後平均分**
 
-# 七、完整流程
+## 七、完整流程
 ```mermaid
 CSV資料
    │
@@ -197,7 +198,7 @@ fixed_total_score
 fixed_average
 ```
 
-# 八、總結
+## 八、總結
 `Student` 類負責：
 * 儲存學生基本資料
 
