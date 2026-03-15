@@ -5,7 +5,7 @@
 - 學生 ID
 - 姓名
 - 三科原始成績
-- 修正後成績
+- 修正後成績 (學生的補考成績)
 - 努力程度比例
 
 其中三科成績會使用 `Scores` 類來管理。
@@ -168,14 +168,14 @@ def compute_fixed_score(self, avg_scores, min_scores)
 @property
 def fixed_total_score(self)
 ```
-> 取得 **修正後總分**
+> 取得 **修正後總分(個別學生)**
 
 ## 六、`fixed_average`
 ```python
 @property
 def fixed_average(self)
 ```
-> 取得 **修正後平均分**
+> 取得 **修正後平均分(個別學生)**
 
 ## 七、完整流程
 ```mermaid
