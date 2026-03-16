@@ -125,6 +125,10 @@ class Student:
         vals = self.fixed_score.to_list()
         return sum(vals) / len(vals)
 
+    def __repr__(self) -> str:
+        """提供 Student 物件的字串表示，方便在調試和輸出時查看學生的基本資訊和成績內容"""
+        return f"Student(ID={self.id}, Name={self.name}, Scores={self.scores}, Fixed={self.fixed_score}, Avg={self.fixed_average:.2f})"
+
 
 class ClassData:
     def __init__(self, students: List[Student]) -> None:
