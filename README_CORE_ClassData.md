@@ -57,9 +57,9 @@ ClassData
 ## 三、計算統計資料 `_calculate_all_stats()`
 這個方法負責：
 ```mermaid
-計算
-平均
-最低
+計算：
+平均,
+最低,
 最高
 ```
 並回傳
@@ -71,20 +71,25 @@ ClassData
 }
 ```
 
+### 原始統計 vs 修正後統計（差異）
+* **原始統計**：使用學生原始成績 `scores` 計算
+* **修正後統計**：使用補正後成績 `fixed_score` 計算
+
+兩者分別存放於不同屬性中，不會混淆：
+* **原始：`self.raw_avg_scores`, `self.min_scores`, `self.max_scores`**
+* **修正後：`self.fixed_avg_scores`, `self.fixed_min_scores`, `self.fixed_max_scores`**
+
 ## 四、修正分數流程
 在` __init__` 中
 ```python
 for student in self.students:
     student.compute_fixed_score(...)
 ```
-意思是：
-```mermaid
-對每一位學生
-計算補分
+
+結果會寫入：
+```text
+student.fixed_score
 ```
-計算後：
->　student.fixed_score
-就會有值
 
 ## 五、學生排序
 最後會排序學生：

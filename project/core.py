@@ -27,7 +27,9 @@ class Scores(Generic[_T]):
 
     @classmethod
     def from_iterable(cls, values: Iterable[_T]) -> "Scores":
-        """從一個可迭代物件創建 Scores 物件，期望該物件包含三個元素，分別對應三科成績"""
+        """將一組分數清單快速轉換成 Scores 物件。
+        例如傳入 [90, 80, 70]，就會自動對應變成 Scores(國=90, 英=80, 數=70)
+        """
         return cls(*values)
 
     def to_list(self) -> List[_T]:

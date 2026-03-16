@@ -5,7 +5,7 @@
 - 學生 ID
 - 姓名
 - 三科原始成績
-- 修正後成績 (學生的補考成績)
+- 修正後成績 (個別學生的修補成績)
 - 努力程度比例
 
 其中三科成績會使用 `Scores` 類來管理。
@@ -31,6 +31,8 @@ Student
 
 `fixed_score`
 -> 存放 **修正後成績**
+
+補充：`fixed_score` 初始值為 `-1`，只是表示「尚未計算」，不是實際分數。
 
 ## 二、初始化 (`__init__`)
 
@@ -60,6 +62,7 @@ def __init__(
 ```python
 None = 缺考
 ```
+`None` 的科目之後會補分；原本有的分數會保留原值。
 例如：
 ```python
 student = Student("A01","Tom",90,80,None)
@@ -88,31 +91,38 @@ CSV 格式：
 id,name,chinese,english,math
 ```
 
-例如：
-
-> A01,Tom,90,80,
+範例：
+```mermaid
+A01,Tom,90,80,
+```
 
 ### 解析流程
 ```mermaid
-CSV字串
-   │
-   ▼
-split(",")
-   │
-   ▼
-["A01","Tom","90","80",""]
-   │
-   ▼
-解析三科分數
-[90.0, 80.0, None]
-   │
-   ▼
-建立 Student 物件
+[ 原始字串 ]  "A01,Tom,90,80,"
+      │
+      ▼  ( 執行 .strip().split(',') )
+      │
+[ 切割列表 ]  ['A01', 'Tom', '90', '80', '']
+      │
+      ├──────────────────────────────┐
+      ▼ ( 前兩項：基本資料 )          ▼ ( 第三項後：成績資料 )
+ id_ = 'A01'                    parts[2:] = ['90', '80', '']
+ name = 'Tom'                        │
+                                     ▼ ( 執行 map(_parse) )
+                                [90.0, 80.0, None] 
+                                     │
+      ┌──────────────────────────────┘ ( 使用 *scores 解包 )
+      ▼ 
+[ 裝填物件 ]  Student(id_, name, *scores)
+      │
+      ▼
+[ 建立Student物件 ]  Student('A01', 'Tom', 90.0, 80.0, None)
 ```
 
-最後等同於：
+補充：
 ```python
-Student("A01","Tom",90,80,None)
+# 這裡的 cls 等同於 Student(id_, name, *scores)
+return cls(id_, name, *scores)
 ```
 
 ## 四、計算修正分數 (`compute_fixed_score`)
@@ -122,14 +132,17 @@ Student("A01","Tom",90,80,None)
 ```mermaid
 最低分 + (平均分 - 最低分) × effort_ratio
 ```
+前提：`avg_scores` 與 `min_scores` 需要是完整的 `Scores[float]`，三科都必須有值（不可為 `None`）。
+
+---
 
 ```python
 def compute_fixed_score(self, avg_scores, min_scores)
 ```
 
 計算依據：
-* 班級平均分
-* 班級最低分
+* 班級原始平均分 (`avg_scores` = `self.raw_avg_scores`)
+* 班級原始最低分 (`min_scores` = `self.min_scores`)
 * 學生努力比例
 
 ### 努力比例 (`effort_ratio`)
@@ -140,6 +153,29 @@ def compute_fixed_score(self, avg_scores, min_scores)
 | 0.0 | 最低分 |
 | >1 | 超過平均 |
 | <0 | 低於最低 |
+
+### 分數範圍限制
+補分計算完成後，程式會將分數限制在 0~100 的範圍內
+```python
+clamped_val = max(0.0, min(100.0, val))
+```
+這可以避免因為 `effort_ratio` 過大或過小導致分數超出正常範圍
+
+### 補分範例
+假設：平均分 = 70，最低分 = 40，`effort_ratio = 0.5`  
+補分 = 40 + (70 - 40) × 0.5 = 55
+
+### 補分上限
+補分結果不會超過：
+```python
+平均分 + FIXED_SCORE_SPACE
+```
+
+程式會取較小值：
+```python
+fixed_vals.append(min(clamped_val, upper_bound))
+```
+這是為了避免補分過高
 
 ### 計算流程
 ```mermaid
@@ -185,7 +221,7 @@ CSV資料
 parse_student()
    │
    ▼
-建立 Student
+建立 Student物件
    │
    ▼
 compute_fixed_score()
@@ -200,7 +236,7 @@ fixed_average
 
 ## 八、總結
 `Student` 類負責：
-* 儲存學生基本資料
+* 儲存學生基本資料 (id, name, score)
 
 * 管理三科成績
 
@@ -209,4 +245,5 @@ fixed_average
 * 計算缺考科目的修正分數
 
 * 提供修正後總分與平均
-> 並透過 `Scores` 類來管理成績，使程式結構更清晰
+
+> 透過 `Scores` 類來管理成績，使程式結構更清晰

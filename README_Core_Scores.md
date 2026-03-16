@@ -39,7 +39,7 @@ scores
 
 * **更容易擴充功能**
 
-# 二、初始化(__init__)
+# 二、初始化(`__init__`)
 ```python
 def __init__(self, chinese, english, math):
     self.chinese = chinese
@@ -92,6 +92,9 @@ def get_by_name(self, name):
         raise ValueError("Invalid subject name")
     return getattr(self, name)
 ```
+## 為甚麼要 `get_by_name`？
+> 因為考慮到未來可能會新增科目，所以用 `get_by_name` 加上名單過濾。這樣以後加新科目的時候，就不用把整個系統的程式碼翻出來重改，而且也能防止大家不小心打錯字導致當機
+
 這個方法可以 **用科目名稱取得對應成績**
 例如：
 ```python
@@ -137,12 +140,12 @@ getattr(self, name)
 def from_iterable(cls, values):
     return cls(*values)
 ```
-**替代的建立方式**
-通常建立 `Scores`：
+**替代的建立方式**<br>
+建立 `Scores`：
 ```python
 Scores(90,80,70)
 ```
-但如果資料是 `list`：
+如果分數已經在 `list`：
 ```python
 values = [90,80,70]
 ```
@@ -185,7 +188,7 @@ scores.to_list()
 * **輸出資料**
 * **計算平均**
 
-# 七、repr()
+# 七、`__repr()__`
 ```python
 def __repr__(self):
     return f"Scores(Chi={self.chinese}, Eng={self.english}, Mat={self.math})"
@@ -235,3 +238,6 @@ Scores(Chi=90, Eng=80, Mat=70)
 * **能轉換成 list**
 
 * **提供清楚的輸出格式**
+
+# 十、補充
+### `__init__` 是負責「把東西裝進去」的，而 `get_by_name` 是負責「把東西拿出來」的
