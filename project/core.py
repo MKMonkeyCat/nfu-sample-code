@@ -169,7 +169,12 @@ class ClassData:
         for sub in Scores.SUBJECTS:
             if use_fixed:
                 # 從學生的 fixed_score 屬性中獲取分數值，這些分數已經過修正，適用於後續的報表生成和分組邏輯
-                vals = [s.fixed_score.get_by_name(sub) for s in self.students if s.fixed_score]
+                vals = [
+                    s.fixed_score.get_by_name(sub)
+                    for s in self.students
+                    # 只考慮已經計算出修正分數的學生，過濾掉初始值 -1 的學生
+                    if s.fixed_score.get_by_name(sub) >= 0
+                ]
             else:
                 # 從學生的 scores 屬性中獲取原始分數值，這些分數是學生最初的成績，未經修正，適用於計算班級的原始統計數據
                 vals = [v for s in self.students if (v := s.scores.get_by_name(sub)) is not None]
