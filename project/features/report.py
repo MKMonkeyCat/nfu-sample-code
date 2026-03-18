@@ -64,7 +64,8 @@ def print_class_report(data: ClassData) -> None:
     `最低分數 |  40.0/ 30.0/ 50.0  |  45.0/ 35.0/ 55.0`
     """
 
-    print("\n" + Style.BOLD + "班級平均,最高及最低分數 (Fixed Scores)" + Style.RESET)
+    print(LINE)
+    print(Style.paint("班級平均,最高及最低分數 (Fixed Scores)", Style.BOLD))
 
     def fmt_scores(scores: Scores[float]):
         return f"{fmt_score(scores.chinese)} {fmt_score(scores.english)} {fmt_score(scores.math)}"
@@ -80,12 +81,11 @@ def print_top_n_students_report(class_data: ClassData, n: int = 3) -> None:
     """
     top_students = class_data.fixed_sorted_students[:n]
 
-    print(f"\n班級前 {n} 名排行榜")
+    print(LINE)
+    print(Style.paint(f"前 {n} 名學生 (Fixed Scores)", Style.BOLD))
 
     for s in top_students:
         print_student_report(s, class_data)
-
-    print(LINE)
 
 
 def print_ng_students_report(class_data: ClassData) -> None:
@@ -97,8 +97,11 @@ def print_ng_students_report(class_data: ClassData) -> None:
     """
     fail_count = 0
 
+    print(LINE)
+    print(Style.paint("不及格學生名單 (Fixed Scores < 60)", Style.BOLD))
     for s in class_data.students:
         if s.fixed_average < 60:
-            fail_count = fail_count + 1
+            print_student_report(s, class_data)
+            fail_count += 1
 
-    print("不及格學生數量:", fail_count)
+    print(f"\n不及格學生人數: {fail_count}")
