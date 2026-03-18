@@ -145,6 +145,10 @@ class ClassData:
         self.max_scores = raw_stats["max"]
         self.min_scores = raw_stats["min"]
 
+        self.update_fixed_scores()
+
+    def update_fixed_scores(self) -> None:
+        """更新所有學生的修正分數，這個方法可以在學生的努力程度改變後重新計算修正分數，確保報表中的數據是最新的"""
         # 對每個學生應用分數修正邏輯來計算修正後的分數，這些修正後的分數將存儲在學生的 fixed_score 屬性中
         for student in self.students:
             student.compute_fixed_score(self.raw_avg_scores, self.min_scores)
