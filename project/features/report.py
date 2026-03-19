@@ -74,6 +74,9 @@ def print_class_report(data: ClassData) -> None:
     print(f"{'max':>16} " + fmt_scores(data.fixed_max_scores))
     print(f"{'min':>16} " + fmt_scores(data.fixed_min_scores))
 
+    scores = data.fixed_avg_scores.to_list()
+    print(f"{'Total Average':>16} {fmt_score(sum(scores) / len(scores))}")
+
 
 def print_top_n_students_report(class_data: ClassData, n: int = 3) -> None:
     """

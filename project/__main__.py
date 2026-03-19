@@ -10,9 +10,16 @@ from .features.report import (
     print_top_n_students_report,
 )
 
+DEBUG = False
+
 
 def main() -> None:
     class_data = ClassData.from_file("data/student_scores_100_missing.csv")
+
+    if DEBUG:
+        # For print step 1 debug
+        print("\n".join(map(str, class_data.students[:5])))
+
     print_all_students_report(class_data)
     print_class_report(class_data)
     print_top_n_students_report(class_data)
