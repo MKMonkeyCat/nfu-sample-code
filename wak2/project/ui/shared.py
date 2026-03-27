@@ -8,10 +8,31 @@ from project import core
 from project.types import StatisticsData, SummaryData, VoteRecord
 
 from .config import CSV_FILE, init_app
+from .texts import (
+    BUTTON_DELETE_SELECTED,
+    COLUMN_DRINK,
+    COLUMN_NAME,
+    COLUMN_ROUND,
+    EMPTY_LIST_PLACEHOLDER,
+    FORM_DELETE_ID,
+    INFO_EMPTY_REPORT,
+    LABEL_DELETE_SELECTION,
+    PLACEHOLDER_DELETE_SELECTION,
+    RECENT_VOTES_LIMIT,
+    SIDEBAR_CAPTION_CLEANUP,
+    SIDEBAR_CAPTION_DATA_PATH,
+    SIDEBAR_SUMMARY_ROUNDS_TEMPLATE,
+    SIDEBAR_SUMMARY_TOTAL_TEMPLATE,
+    SIDEBAR_SUMMARY_VOTERS_TEMPLATE,
+    SIDEBAR_TITLE_CLEANUP,
+    SIDEBAR_TITLE_MANAGEMENT,
+    SUCCESS_DELETE_TEMPLATE,
+    WARNING_DELETE_NONE,
+)
 from .theme import apply_theme
 
 
-def format_list(items: list[str], empty: str = "無") -> str:
+def format_list(items: list[str], empty: str = EMPTY_LIST_PLACEHOLDER) -> str:
     """將字串列表格式化以便顯示"""
     return "、".join(items) if items else empty
 
@@ -66,50 +87,50 @@ def load_app_data() -> tuple[list[VoteRecord], SummaryData, StatisticsData]:
 def render_sidebar(stats: StatisticsData, records: list[VoteRecord]) -> None:
     """顯示共用的側邊欄控制元件"""
     with st.sidebar:
-        st.markdown("### 投票管理")
-        st.caption("資料會寫入 `data/votes.csv`，送出後立即更新報表內容")
+        st.markdown(SIDEBAR_TITLE_MANAGEMENT)
+        st.caption(SIDEBAR_CAPTION_DATA_PATH)
         st.markdown(
             f"""
-            <div class="summary-line">總票數：{stats.total}</div>
-            <div class="summary-line">投票者：{stats.unique_voters}</div>
-            <div class="summary-line">輪次：{len(stats.rounds) or 1}</div>
+            <div class="summary-line">{SIDEBAR_SUMMARY_TOTAL_TEMPLATE.format(total=stats.total)}</div>
+            <div class="summary-line">{SIDEBAR_SUMMARY_VOTERS_TEMPLATE.format(unique_voters=stats.unique_voters)}</div>
+            <div class="summary-line">{SIDEBAR_SUMMARY_ROUNDS_TEMPLATE.format(rounds_count=len(stats.rounds) or 1)}</div>
             """,
             unsafe_allow_html=True,
         )
         st.divider()
-        st.markdown("### 資料清理")
-        st.caption("刪除後的資料不可復原")
+        st.markdown(SIDEBAR_TITLE_CLEANUP)
+        st.caption(SIDEBAR_CAPTION_CLEANUP)
 
         delete_options = build_delete_options(records)
         labels = [label for label, _ in delete_options]
         index_map = {label: index for label, index in delete_options}
 
-        with st.form("delete_votes_form", clear_on_submit=True):
+        with st.form(FORM_DELETE_ID, clear_on_submit=True):
             selected_labels = st.multiselect(
-                "選擇要刪除的資料",
+                LABEL_DELETE_SELECTION,
                 options=labels,
-                placeholder="可複選",
+                placeholder=PLACEHOLDER_DELETE_SELECTION,
                 disabled=not labels,
             )
-            delete_submitted = st.form_submit_button("刪除選取資料", use_container_width=True)
+            delete_submitted = st.form_submit_button(BUTTON_DELETE_SELECTED, use_container_width=True)
 
             if delete_submitted:
                 selected_indices = [index_map[label] for label in selected_labels]
                 deleted_count = core.delete_votes_by_indices(CSV_FILE, selected_indices)
                 if deleted_count == 0:
-                    st.warning("請先選擇要刪除的資料")
+                    st.warning(WARNING_DELETE_NONE)
                 else:
-                    st.success(f"已刪除 {deleted_count} 筆資料")
+                    st.success(SUCCESS_DELETE_TEMPLATE.format(count=deleted_count))
                     st.rerun()
 
 
 def render_empty_report() -> None:
     """為兩個分頁提供無資料時的顯示狀態"""
-    st.info("目前尚無投票資料，請先到「投票系統」頁面新增資料")
+    st.info(INFO_EMPTY_REPORT)
 
 
 def render_recent_votes(records: list[VoteRecord]) -> None:
     """顯示最新的投票紀錄"""
-    recent = list(reversed(records[-8:]))
-    rows = [{"輪次": r.round, "姓名": r.name, "飲料": r.option} for r in recent]
+    recent = list(reversed(records[-RECENT_VOTES_LIMIT:]))
+    rows = [{COLUMN_ROUND: r.round, COLUMN_NAME: r.name, COLUMN_DRINK: r.option} for r in recent]
     st.dataframe(rows, use_container_width=True, hide_index=True)

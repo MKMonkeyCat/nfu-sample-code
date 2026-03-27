@@ -6,19 +6,41 @@ from typing import Optional
 
 from project.types import VoteRecord
 
-from .constants import ROUND_NAME_PATTERN, ROUND_OPTIONS
+from .constants import (
+    CSV_COL_NAME,
+    CSV_COL_OPTION,
+    CSV_COL_ROUND,
+    CSV_HEADER_NO_ROUND,
+    CSV_HEADER_WITH_ROUND,
+    DEFAULT_ROUND,
+    ERR_CUSTOM_ROUND_INVALID,
+    ERR_CUSTOM_ROUND_TOO_LONG,
+    ERR_DUPLICATE_VOTE,
+    ERR_NAME_EMPTY,
+    ERR_NAME_TOO_LONG,
+    ERR_OPTION_EMPTY,
+    ERR_OPTION_TOO_LONG,
+    ERR_ROUND_EMPTY,
+    MAX_CUSTOM_ROUND_LENGTH,
+    MAX_NAME_LENGTH,
+    MAX_OPTION_LENGTH,
+    ROUND_NAME_PATTERN,
+    ROUND_OPTIONS,
+)
 
 
 def ensure_csv(csv_path: Path, with_round: bool = True) -> None:
     """Create the CSV file with header when it does not exist yet."""
     csv_path.parent.mkdir(parents=True, exist_ok=True)
-    if not csv_path.exists():
-        with csv_path.open("w", newline="", encoding="utf-8") as file:
-            writer = csv.writer(file)
-            if with_round:
-                writer.writerow(["輪次", "姓名", "選項"])
-            else:
-                writer.writerow(["姓名", "選項"])
+    if csv_path.exists():
+        return
+
+    with csv_path.open("w", newline="", encoding="utf-8") as file:
+        writer = csv.writer(file)
+        if with_round:
+            writer.writerow(CSV_HEADER_WITH_ROUND)
+        else:
+            writer.writerow(CSV_HEADER_NO_ROUND)
 
 
 def read_votes(csv_path: Path, round_filter: Optional[str] = None) -> list[VoteRecord]:
@@ -32,9 +54,10 @@ def read_votes(csv_path: Path, round_filter: Optional[str] = None) -> list[VoteR
             for row in reader:
                 if row is None:
                     continue
-                round_val = (row.get("輪次") or "default").strip() or "default"
-                name = (row.get("姓名") or "").strip()
-                option = (row.get("選項") or "").strip()
+
+                round_val = (row.get(CSV_COL_ROUND) or DEFAULT_ROUND).strip() or DEFAULT_ROUND
+                name = (row.get(CSV_COL_NAME) or "").strip()
+                option = (row.get(CSV_COL_OPTION) or "").strip()
 
                 if name and option and (round_filter is None or round_val == round_filter):
                     records.append(VoteRecord(name, option, round_val))
@@ -44,20 +67,21 @@ def read_votes(csv_path: Path, round_filter: Optional[str] = None) -> list[VoteR
     return records
 
 
-def add_vote(csv_path: Path, name: str, option: str, round_name: str = "default") -> None:
+def add_vote(csv_path: Path, name: str, option: str, round_name: str = DEFAULT_ROUND) -> None:
     """Append one vote record into the CSV file."""
     name = name.strip()
     option = option.strip()
-    round_name = round_name.strip() or "default"
+    round_name = round_name.strip() or DEFAULT_ROUND
 
     if not name:
-        raise ValueError("姓名不能為空")
+        raise ValueError(ERR_NAME_EMPTY)
+
     if not option:
-        raise ValueError("選項不能為空")
+        raise ValueError(ERR_OPTION_EMPTY)
 
     existing_records = read_votes(csv_path)
     if any(record.name == name and record.round == round_name for record in existing_records):
-        raise ValueError("同一位投票者在同一輪次只能投一次")
+        raise ValueError(ERR_DUPLICATE_VOTE)
 
     ensure_csv(csv_path)
     with csv_path.open("a", newline="", encoding="utf-8") as file:
@@ -77,7 +101,7 @@ def delete_votes_by_indices(csv_path: Path, indices: list[int]) -> int:
 
     with csv_path.open("w", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
-        writer.writerow(["輪次", "姓名", "選項"])
+        writer.writerow(CSV_HEADER_WITH_ROUND)
         for index, record in enumerate(records):
             if index not in delete_set:
                 writer.writerow([record.round, record.name, record.option])
@@ -88,13 +112,17 @@ def delete_votes_by_indices(csv_path: Path, indices: list[int]) -> int:
 def validate_vote_data(name: str, option: str) -> tuple[bool, str]:
     """Validate vote input data."""
     if not name or not name.strip():
-        return False, "姓名不能為空"
+        return False, ERR_NAME_EMPTY
+
     if not option or not option.strip():
-        return False, "選項不能為空"
-    if len(name.strip()) > 50:
-        return False, "姓名長度不能超過50字"
-    if len(option.strip()) > 50:
-        return False, "選項長度不能超過50字"
+        return False, ERR_OPTION_EMPTY
+
+    if len(name.strip()) > MAX_NAME_LENGTH:
+        return False, ERR_NAME_TOO_LONG
+
+    if len(option.strip()) > MAX_OPTION_LENGTH:
+        return False, ERR_OPTION_TOO_LONG
+
     return True, ""
 
 
@@ -103,12 +131,15 @@ def validate_round_name(round_name: str) -> tuple[bool, str]:
     normalized = round_name.strip()
 
     if not normalized:
-        return False, "輪次名稱不能為空"
+        return False, ERR_ROUND_EMPTY
+
     if normalized in ROUND_OPTIONS:
         return True, ""
-    if len(normalized) > 20:
-        return False, "自訂輪次名稱不能超過20字"
+
+    if len(normalized) > MAX_CUSTOM_ROUND_LENGTH:
+        return False, ERR_CUSTOM_ROUND_TOO_LONG
+
     if not ROUND_NAME_PATTERN.fullmatch(normalized):
-        return False, "自訂輪次只允許中文、英文、數字、-、_"
+        return False, ERR_CUSTOM_ROUND_INVALID
 
     return True, ""

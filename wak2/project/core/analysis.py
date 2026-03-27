@@ -5,13 +5,13 @@ from pathlib import Path
 
 from project.types import StatisticsData, SummaryData, VoteRecord
 
-from .constants import ROUND_OPTIONS
+from .constants import ROUND_OPTIONS, ROUND_SINGLE
 from .storage import read_votes
 
 
 def get_round_sort_key(round_name: str) -> tuple[int, int | str]:
     """Build a stable sort key for round names."""
-    if round_name == "單輪":
+    if round_name == ROUND_SINGLE:
         return (0, 0)
 
     if round_name in ROUND_OPTIONS:

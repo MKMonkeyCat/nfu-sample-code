@@ -9,11 +9,4 @@ from .models import (
     VoteTableRow,
 )
 
-__all__ = [
-    "CountRow",
-    "RoundComparisonRow",
-    "StatisticsData",
-    "SummaryData",
-    "VoteRecord",
-    "VoteTableRow",
-]
+__all__ = ["CountRow", "RoundComparisonRow", "StatisticsData", "SummaryData", "VoteRecord", "VoteTableRow"]

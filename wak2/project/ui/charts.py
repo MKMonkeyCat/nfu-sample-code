@@ -66,7 +66,8 @@ def render_bar_chart(summary: SummaryData) -> None:
 
 def render_round_grouped_bar_chart(stats: StatisticsData) -> None:
     """顯示多輪投票趨勢的分組長條圖"""
-    rounds = [round_name for round_name in stats.rounds if round_name != "單輪"]
+    rounds = [round_name for round_name in stats.rounds if round_name != core.ROUND_SINGLE]
+
     if len(rounds) <= 1:
         st.info("目前輪次不足，至少需要兩個多輪資料才能顯示多輪比較圖")
         return
