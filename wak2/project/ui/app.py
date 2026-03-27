@@ -351,7 +351,7 @@ def render_vote_overview(records: list[core.VoteRecord], summary: dict[str, obje
 def render_vote_page(records: list[core.VoteRecord], summary: dict[str, object], stats: dict[str, object]) -> None:
     """顯示投票頁面"""
     st.title("投票系統")
-    st.caption("快輸入投票資料並即時呈現統計結果")
+    st.caption("請輸入投票資料並即時呈現統計結果")
 
     col1, col2 = st.columns([1, 1], gap="large")
     with col1:
