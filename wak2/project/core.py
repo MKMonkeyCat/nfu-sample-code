@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import re
+from collections import defaultdict
 from collections import Counter
 from pathlib import Path
 from typing import NamedTuple, Optional
@@ -38,6 +39,33 @@ def sort_round_names(round_names: list[str]) -> list[str]:
 def sort_records(records: list[VoteRecord]) -> list[VoteRecord]:
 	"""Sort records by round, then by voter name and option."""
 	return sorted(records, key=lambda record: (get_round_sort_key(record.round), record.name, record.option))
+
+
+def sort_records_for_detail(records: list[VoteRecord]) -> list[VoteRecord]:
+	"""Sort records for the detail table.
+	
+	Order by round first. Within the same round, mode options appear before
+	other options, then rows are sorted by option and voter name.
+	"""
+	round_mode_map: dict[str, set[str]] = {}
+	records_by_round: dict[str, list[VoteRecord]] = defaultdict(list)
+	
+	for record in records:
+		records_by_round[record.round].append(record)
+	
+	for round_name, round_records in records_by_round.items():
+		summary = build_summary(round_records)
+		round_mode_map[round_name] = set(summary["modes"])
+	
+	return sorted(
+		records,
+		key=lambda record: (
+			get_round_sort_key(record.round),
+			0 if record.option in round_mode_map.get(record.round, set()) else 1,
+			record.option,
+			record.name,
+		),
+	)
 
 
 def ensure_csv(csv_path: Path, with_round: bool = True) -> None:

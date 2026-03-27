@@ -557,7 +557,7 @@ def render_round_grouped_bar_chart(stats: dict[str, object]) -> None:
 
 def render_data_table(records: list[core.VoteRecord]) -> None:
     """顯示完整資料表"""
-    sorted_records = core.sort_records(records)
+    sorted_records = core.sort_records_for_detail(records)
     rows = [{"輪次": r.round, "姓名": r.name, "飲料": r.option} for r in sorted_records]
     st.dataframe(rows, use_container_width=True, hide_index=True)
 
