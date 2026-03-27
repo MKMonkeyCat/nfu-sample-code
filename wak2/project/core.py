@@ -204,20 +204,6 @@ def validate_vote_data(name: str, option: str) -> tuple[bool, str]:
 	return True, ""
 
 
-def get_voter_history(csv_path: Path, name: str) -> list[VoteRecord]:
-	"""Get all votes from a specific voter.
-	
-	Args:
-		csv_path: Path to the CSV file
-		name: Voter's name to filter by
-	
-	Returns:
-		List of VoteRecord objects from the voter
-	"""
-	records = read_votes(csv_path)
-	return [r for r in records if r.name == name]
-
-
 def get_statistics(csv_path: Path) -> dict[str, object]:
 	"""Get comprehensive statistics of all votes.
 	
@@ -239,32 +225,4 @@ def get_statistics(csv_path: Path) -> dict[str, object]:
 		"unique_options": unique_options,
 		"rounds": get_all_rounds(csv_path),
 	}
-
-
-def delete_vote_by_index(csv_path: Path, index: int) -> bool:
-	"""Delete a vote record by its index.
-	
-	Args:
-		csv_path: Path to the CSV file
-		index: Index of the record to delete (0-based)
-	
-	Returns:
-		True if deletion was successful, False otherwise
-	"""
-	try:
-		records = read_votes(csv_path)
-		if index < 0 or index >= len(records):
-			return False
-		
-		# 重建CSV，跳過指定索引的記錄
-		with csv_path.open("w", newline="", encoding="utf-8") as f:
-			writer = csv.writer(f)
-			writer.writerow(["輪次", "姓名", "選項"])
-			for i, record in enumerate(records):
-				if i != index:
-					writer.writerow([record.round, record.name, record.option])
-		
-		return True
-	except Exception:
-		return False
 
