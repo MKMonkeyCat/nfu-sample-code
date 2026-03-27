@@ -11,9 +11,6 @@ from .texts import (
     FORM_VOTE_ID,
     MODE_OPTIONS,
     PAGE_TITLE_VOTE,
-    PLACEHOLDER_CUSTOM_DRINK,
-    PLACEHOLDER_CUSTOM_ROUND,
-    PLACEHOLDER_NAME,
     STATE_RESET,
     STATE_VOTE_CUSTOM_OPTION,
     STATE_VOTE_CUSTOM_ROUND_NAME,
@@ -21,8 +18,9 @@ from .texts import (
     STATE_VOTE_NAME,
     STATE_VOTE_OPTION,
     STATE_VOTE_ROUND_CHOICE,
-    SUCCESS_VOTE_ADDED_TEMPLATE,
 )
+
+SUCCESS_VOTE_ADDED_TEMPLATE = "已新增 {name} 的投票資料"
 
 
 def render_vote_form() -> None:
@@ -50,12 +48,12 @@ def render_vote_form() -> None:
         round_choice = core.ROUND_SINGLE
 
     with st.form(FORM_VOTE_ID, clear_on_submit=False):
-        name = st.text_input("姓名", placeholder=PLACEHOLDER_NAME, key=STATE_VOTE_NAME)
+        name = st.text_input("姓名", placeholder="例如：小明", key=STATE_VOTE_NAME)
 
         if selected_option == DRINK_OPTIONS[-1]:
             custom_option = st.text_input(
                 "自訂飲料",
-                placeholder=PLACEHOLDER_CUSTOM_DRINK,
+                placeholder="請輸入飲料名稱",
                 key=STATE_VOTE_CUSTOM_OPTION,
             )
         else:
@@ -64,7 +62,7 @@ def render_vote_form() -> None:
         if mode == core.MODE_MULTI and round_choice == core.CUSTOM_ROUND_OPTION:
             round_name = st.text_input(
                 "自訂輪次名稱",
-                placeholder=PLACEHOLDER_CUSTOM_ROUND,
+                placeholder="例如：midterm",
                 key=STATE_VOTE_CUSTOM_ROUND_NAME,
             )
             st.caption("自訂輪次只允許中文、英文、數字、-、_，且不能超過20字")
