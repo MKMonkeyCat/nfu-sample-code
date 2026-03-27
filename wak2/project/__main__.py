@@ -6,9 +6,14 @@ from project.ui import render_app
 
 
 def main() -> None:
-	st.set_page_config(page_title="眾數應用互動遊戲系統", page_icon="📊", layout="centered")
-	render_app()
+    st.set_page_config(
+        page_title="眾數應用互動遊戲系統",
+        page_icon="⚡",
+        layout="wide",
+        initial_sidebar_state="expanded",
+    )
+    render_app()
 
 
 if __name__ == "__main__":
-	main()
+    main()
