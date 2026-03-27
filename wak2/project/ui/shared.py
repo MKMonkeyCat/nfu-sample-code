@@ -98,7 +98,7 @@ def render_sidebar(stats: StatisticsData, records: list[VoteRecord]) -> None:
                 placeholder="可複選",
                 disabled=not labels,
             )
-            delete_submitted = st.form_submit_button("刪除選取資料", use_container_width=True)
+            delete_submitted = st.form_submit_button("刪除選取資料", width=True)
 
             if delete_submitted:
                 selected_indices = [index_map[label] for label in selected_labels]
@@ -119,4 +119,4 @@ def render_recent_votes(records: list[VoteRecord]) -> None:
     """顯示最新的投票紀錄"""
     recent = list(reversed(records[-RECENT_VOTES_LIMIT:]))
     rows = [{COLUMN_ROUND: r.round, COLUMN_NAME: r.name, COLUMN_DRINK: r.option} for r in recent]
-    st.dataframe(rows, use_container_width=True, hide_index=True)
+    st.dataframe(rows, width=True, hide_index=True)
