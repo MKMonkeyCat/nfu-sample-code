@@ -80,21 +80,6 @@ def apply_theme() -> None:
         [data-testid="stMetricValue"] {
             color: var(--text);
         }
-        .stTabs [data-baseweb="tab-list"] {
-            gap: 8px;
-        }
-        .stTabs [data-baseweb="tab"] {
-            background: rgba(255, 255, 255, 0.72);
-            border: 1px solid var(--border);
-            border-radius: 999px;
-            height: 44px;
-            padding: 0 18px;
-        }
-        .stTabs [aria-selected="true"] {
-            background: var(--accent-soft);
-            color: var(--accent);
-            border-color: rgba(31, 111, 235, 0.22);
-        }
         .stButton > button, .stFormSubmitButton > button {
             border-radius: 12px;
             border: none;
@@ -148,6 +133,27 @@ def build_count_rows(summary: dict[str, object]) -> list[dict[str, object]]:
         }
         for option, vote in sorted_items
     ]
+
+
+def configure_page(page_title: str) -> None:
+    """Configure shared Streamlit page settings."""
+    st.set_page_config(
+        page_title=page_title,
+        page_icon="📊",
+        layout="wide",
+        initial_sidebar_state="expanded",
+    )
+
+
+def load_app_data() -> tuple[list[core.VoteRecord], dict[str, object], dict[str, object]]:
+    """Load and prepare shared data for each page."""
+    apply_theme()
+    init_app()
+    records = core.read_votes(CSV_FILE)
+    summary = core.build_summary(records)
+    stats = core.get_statistics(CSV_FILE)
+    render_sidebar(stats)
+    return records, summary, stats
 
 
 def render_sidebar(stats: dict[str, object]) -> None:
@@ -357,20 +363,13 @@ def render_report_page(records: list[core.VoteRecord], summary: dict[str, object
         render_data_table(records)
 
 
-def render_app() -> None:
-    """主應用入口。"""
-    apply_theme()
-    init_app()
+def render_vote_app() -> None:
+    """Render the vote system page."""
+    records, summary, stats = load_app_data()
+    render_vote_page(records, summary, stats)
 
-    records = core.read_votes(CSV_FILE)
-    summary = core.build_summary(records)
-    stats = core.get_statistics(CSV_FILE)
 
-    render_sidebar(stats)
-    vote_tab, report_tab = st.tabs(["投票系統", "資料報告"])
-
-    with vote_tab:
-        render_vote_page(records, summary, stats)
-
-    with report_tab:
-        render_report_page(records, summary, stats)
+def render_report_app() -> None:
+    """Render the report page."""
+    records, summary, stats = load_app_data()
+    render_report_page(records, summary, stats)

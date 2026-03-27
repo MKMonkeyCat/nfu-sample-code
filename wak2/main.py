@@ -1,18 +1,11 @@
 from __future__ import annotations
 
-import streamlit as st
-
-from project.ui import render_app
+from project.ui import configure_page, render_vote_app
 
 
 def main() -> None:
-    st.set_page_config(
-        page_title="投票分析系統",
-        page_icon="📊",
-        layout="wide",
-        initial_sidebar_state="expanded",
-    )
-    render_app()
+    configure_page("投票系統")
+    render_vote_app()
 
 
 if __name__ == "__main__":
