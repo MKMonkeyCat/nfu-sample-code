@@ -565,7 +565,7 @@ def render_data_table(records: list[core.VoteRecord]) -> None:
 def render_report_page(records: list[core.VoteRecord], summary: dict[str, object], stats: dict[str, object]) -> None:
     """顯示報表頁面"""
     st.title("資料報告")
-    st.caption("統計、圖表與輪次比較，方便快速報告與展示")
+    st.caption("統計結果、圖表與輪次比較，提供快速分析與展示")
 
     if not records:
         render_empty_report()
