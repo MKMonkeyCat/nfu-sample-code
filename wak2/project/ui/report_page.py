@@ -88,7 +88,7 @@ def render_round_report(stats: StatisticsData) -> None:
         }
         for row in rows
     ]
-    st.dataframe(display_rows, width=True, hide_index=True)
+    st.dataframe(display_rows, width="stretch", hide_index=True)
 
     changes = core.get_mode_changes(CSV_FILE)
     if changes:
@@ -109,7 +109,7 @@ def render_data_table(records: list[VoteRecord]) -> None:
         }
         for row in rows
     ]
-    st.dataframe(display_rows, width=True, hide_index=True)
+    st.dataframe(display_rows, width="stretch", hide_index=True)
 
 
 def render_report_page(records: list[VoteRecord], summary: SummaryData, stats: StatisticsData) -> None:
@@ -142,7 +142,7 @@ def render_report_page(records: list[VoteRecord], summary: SummaryData, stats: S
             }
             for row in count_rows
         ]
-        st.dataframe(display_count_rows, width=True, hide_index=True)
+        st.dataframe(display_count_rows, width="stretch", hide_index=True)
 
     st.divider()
     st.subheader("多輪比較圖")

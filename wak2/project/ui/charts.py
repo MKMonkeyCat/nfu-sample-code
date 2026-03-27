@@ -60,7 +60,7 @@ def render_bar_chart(summary: SummaryData) -> None:
         )
 
     ax.margins(y=0.14)
-    st.pyplot(fig, width=True)
+    st.pyplot(fig, width="stretch")
     plt.close(fig)
 
 
@@ -157,5 +157,5 @@ def render_round_grouped_bar_chart(stats: StatisticsData) -> None:
             bbox_transform=fig.transFigure,
         )
     fig.subplots_adjust(right=0.84, bottom=0.16)
-    st.pyplot(fig, width=True)
+    st.pyplot(fig, width="stretch")
     plt.close(fig)

@@ -77,9 +77,9 @@ def render_sidebar(stats: StatisticsData, records: list[VoteRecord]) -> None:
         st.caption("資料會寫入 `data/votes.csv`，送出後立即更新報表內容")
         st.markdown(
             f"""
-            <div class="summary-line">總票數：{stats.total}</div>
-            <div class="summary-line">投票者：{stats.unique_voters}</div>
-            <div class="summary-line">輪次：{len(stats.rounds) or 1}</div>
+            <div class="summary-line">總票數：{html.escape(str(stats.total))}</div>
+            <div class="summary-line">投票者：{html.escape(str(stats.unique_voters))}</div>
+            <div class="summary-line">輪次：{html.escape(str(len(stats.rounds) or 1))}</div>
             """,
             unsafe_allow_html=True,
         )
@@ -98,7 +98,7 @@ def render_sidebar(stats: StatisticsData, records: list[VoteRecord]) -> None:
                 placeholder="可複選",
                 disabled=not labels,
             )
-            delete_submitted = st.form_submit_button("刪除選取資料", width=True)
+            delete_submitted = st.form_submit_button("刪除選取資料", width="stretch")
 
             if delete_submitted:
                 selected_indices = [index_map[label] for label in selected_labels]
@@ -119,4 +119,4 @@ def render_recent_votes(records: list[VoteRecord]) -> None:
     """顯示最新的投票紀錄"""
     recent = list(reversed(records[-RECENT_VOTES_LIMIT:]))
     rows = [{COLUMN_ROUND: r.round, COLUMN_NAME: r.name, COLUMN_DRINK: r.option} for r in recent]
-    st.dataframe(rows, width=True, hide_index=True)
+    st.dataframe(rows, width="stretch", hide_index=True)

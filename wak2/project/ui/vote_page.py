@@ -71,7 +71,7 @@ def render_vote_form() -> None:
         else:
             round_name = core.ROUND_SINGLE
 
-        submitted = st.form_submit_button("送出投票", width=True)
+        submitted = st.form_submit_button("送出投票", width="stretch")
 
         if submitted:
             final_option = custom_option.strip() if selected_option == DRINK_OPTIONS[-1] else selected_option
