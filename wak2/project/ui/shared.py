@@ -59,14 +59,15 @@ def render_hover_metric(label: str, value: str, delta: str, tooltip: str) -> Non
     )
 
 
-def load_app_data() -> tuple[list[VoteRecord], SummaryData, StatisticsData]:
+def load_app_data(show_sidebar: bool = True) -> tuple[list[VoteRecord], SummaryData, StatisticsData]:
     """載入並初始化各頁共用資料"""
     apply_theme()
     init_app()
     records = core.read_votes(CSV_FILE)
     summary = core.build_summary(records)
     stats = core.get_statistics(CSV_FILE)
-    render_sidebar(stats, records)
+    if show_sidebar:
+        render_sidebar(stats, records)
     return records, summary, stats
 
 

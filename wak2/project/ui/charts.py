@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import streamlit as st
+from matplotlib import font_manager
 from matplotlib.ticker import MaxNLocator
 
 from project import core
@@ -9,7 +12,17 @@ from project.types import StatisticsData, SummaryData
 
 from .config import COLOR_PALETTE, CSV_FILE
 
-plt.rcParams["font.sans-serif"] = ["Microsoft JhengHei"]
+
+def _configure_chart_font() -> None:
+    """Load chart font from assets and configure matplotlib globally."""
+    font_path = Path(__file__).resolve().parents[2] / "assets" / "NotoSansJP-VariableFont_wght.ttf"
+    if font_path.exists():
+        font_manager.fontManager.addfont(str(font_path))
+        font_name = font_manager.FontProperties(fname=str(font_path)).get_name()
+        plt.rcParams["font.sans-serif"] = [font_name, "DejaVu Sans"]
+
+
+_configure_chart_font()
 plt.rcParams["axes.unicode_minus"] = False
 
 
