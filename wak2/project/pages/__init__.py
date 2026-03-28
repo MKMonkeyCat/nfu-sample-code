@@ -1,15 +1,14 @@
 from __future__ import annotations
 
-from typing import NamedTuple
+from .admin import render as render_admin
+from .analyze import render as render_analyze
+from .vote import render as render_vote
+
+__all__ = ["PAGES"]
 
 
-class VoteSelection(NamedTuple):
-    uuid: str
-    name: str
-
-
-def vote_display_text(item: VoteSelection) -> str:
-    return f"{item.name} ({item.uuid[:8]})"
-
-
-__all__ = ["VoteSelection", "vote_display_text"]
+PAGES = [
+    ("admin", "管理頁", render_admin),
+    ("vote", "投票頁", render_vote),
+    ("analyze", "分析頁", render_analyze),
+]
