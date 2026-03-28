@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import warnings
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -9,6 +10,8 @@ from uuid import uuid4
 
 from project.csv_tool import CSVManager, csv_field
 from project.types import VoteRecord
+from project.utils.datetime import parse_iso_datetime, to_iso_seconds_utc
+from project.utils.text_normalize import normalize_option_set
 
 CONFIG_FILE = Path("data/config/vote_configs.json")
 
@@ -43,8 +46,8 @@ class VoteConfig:
             now = datetime.now(UTC)
             rounds["default"] = VoteRoundConfig(
                 name="預設輪次",
-                start_time=now.isoformat(timespec="seconds"),
-                end_time=(now + timedelta(days=3650)).isoformat(timespec="seconds"),
+                start_time=to_iso_seconds_utc(now),
+                end_time=to_iso_seconds_utc(now + timedelta(days=3650)),
             )
 
         start_time = str(data.get("start_time", "")).strip()
@@ -82,20 +85,9 @@ class VoteRoundConfig:
         )
 
 
-def _parse_datetime(value: str) -> datetime:
-    text = value.strip()
-    if not text:
-        raise ValueError("Datetime cannot be empty")
-    if text.endswith("Z"):
-        text = text[:-1] + "+00:00"
-
-    dt = datetime.fromisoformat(text)
-    return dt if dt.tzinfo else dt.replace(tzinfo=UTC)
-
-
 def _is_time_in_window(now: datetime, start_time: str, end_time: str) -> bool:
-    start_dt = _parse_datetime(start_time)
-    end_dt = _parse_datetime(end_time)
+    start_dt = parse_iso_datetime(start_time)
+    end_dt = parse_iso_datetime(end_time)
     return start_dt <= now <= end_dt
 
 
@@ -110,16 +102,30 @@ class VoteCoreSystem:
         if not config_path.exists():
             config_path.parent.mkdir(parents=True, exist_ok=True)
             config_path.write_text("{}", encoding="utf-8")
-        else:
-            data = json.loads(config_path.read_text(encoding="utf-8"))
-            if not isinstance(data, dict):
-                raise ValueError("Invalid config format: expected a JSON object")
+            return
 
-            for uuid, config_data in data.items():
+        try:
+            data = json.loads(config_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            warnings.warn(f"Invalid vote config JSON, loading empty config: {exc}", RuntimeWarning)
+            self.vote_configs.clear()
+            self.votes.clear()
+            return
+
+        if not isinstance(data, dict):
+            warnings.warn("Invalid config format: expected a JSON object", RuntimeWarning)
+            return
+
+        for uuid, config_data in data.items():
+            try:
+                if not isinstance(config_data, dict):
+                    raise ValueError("config entry must be object")
                 config = VoteConfig.from_dict(config_data)
                 self.vote_configs[uuid] = config
                 self.votes[config.path] = CSVManager(config.path, VoteCsvRow)
                 self.votes[config.path].ensure_file()
+            except (KeyError, TypeError, ValueError) as exc:
+                warnings.warn(f"Skip invalid vote config {uuid}: {exc}", RuntimeWarning)
 
     def list_vote_configs(self) -> list[tuple[str, VoteConfig]]:
         return list(self.vote_configs.items())
@@ -132,8 +138,8 @@ class VoteCoreSystem:
         file_slug = uuid.replace("-", "")[:12]
         default_round_uuid = str(uuid4())
         now = datetime.now(UTC)
-        default_start = now.isoformat(timespec="seconds")
-        default_end = (now + timedelta(days=3650)).isoformat(timespec="seconds")
+        default_start = to_iso_seconds_utc(now)
+        default_end = to_iso_seconds_utc(now + timedelta(days=3650))
 
         config = VoteConfig(
             name=name,
@@ -173,7 +179,7 @@ class VoteCoreSystem:
             raise ValueError("Vote config not found")
 
         normalized_name = name.strip()
-        normalized_options = {item.strip() for item in options if item.strip()}
+        normalized_options = normalize_option_set(options)
 
         if not normalized_name:
             raise ValueError("Vote name cannot be empty")
@@ -205,13 +211,13 @@ class VoteCoreSystem:
             if not round_config.name.strip():
                 raise ValueError(f"錯誤，輪次名稱不能為空: {round_uuid[:8]}")
 
-            round_start = _parse_datetime(round_config.start_time)
-            round_end = _parse_datetime(round_config.end_time)
+            round_start = parse_iso_datetime(round_config.start_time)
+            round_end = parse_iso_datetime(round_config.end_time)
             if round_start > round_end:
                 raise ValueError(f"錯誤，結束時間不能早於開始時間: {round_uuid[:8]}")
 
-        vote_start = _parse_datetime(start_time)
-        vote_end = _parse_datetime(end_time)
+        vote_start = parse_iso_datetime(start_time)
+        vote_end = parse_iso_datetime(end_time)
         if vote_start > vote_end:
             raise ValueError("錯誤，投票結束時間不能早於開始時間")
 
@@ -234,8 +240,8 @@ class VoteCoreSystem:
         sorted_rounds_desc = sorted(
             config.rounds.items(),
             key=lambda item: (
-                _parse_datetime(item[1].start_time),
-                _parse_datetime(item[1].end_time),
+                parse_iso_datetime(item[1].start_time),
+                parse_iso_datetime(item[1].end_time),
                 item[0],
             ),
             reverse=True,
@@ -258,22 +264,32 @@ class VoteCoreSystem:
             return round_uuid
         return round_config.name
 
-    def add_vote_record(self, uuid: str, voter_name: str, option: str, round_name: str = "default") -> None:
+    def add_vote_record(self, uuid: str, voter_name: str, option: str, round_name: str | None = None) -> None:
         config = self.vote_configs.get(uuid)
         if config is None:
             raise ValueError("Vote config not found")
-        if option not in config.options:
+        normalized_option = option.strip()
+        if normalized_option not in config.options:
             raise ValueError("Option not allowed in this vote")
-        if round_name not in config.rounds:
+
+        normalized_round_name = (round_name or "").strip()
+        if not normalized_round_name:
+            active_round = self.get_active_round(uuid)
+            if active_round is not None:
+                normalized_round_name = active_round[0]
+            elif len(config.rounds) == 1:
+                normalized_round_name = next(iter(config.rounds))
+
+        if normalized_round_name not in config.rounds:
             raise ValueError("Round not found in this vote")
 
         manager = self.votes[config.path]
-        now_iso = datetime.now(UTC).isoformat(timespec="seconds")
+        now_iso = to_iso_seconds_utc(datetime.now(UTC))
         manager.append(
             VoteCsvRow(
                 name=voter_name.strip(),
-                option=option.strip(),
-                round=round_name.strip() or "default",
+                option=normalized_option,
+                round=normalized_round_name,
                 vote_time=now_iso,
             )
         )

@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Any
 
 import streamlit as st
 
 from project.core import VoteCoreService
+from project.core.storage import VoteConfig
 
 
 def _get_uuid_from_query() -> str:
@@ -15,12 +15,11 @@ def _get_uuid_from_query() -> str:
     return str(raw).strip()
 
 
-def _render_uuid_help(configs: Sequence[tuple[str, Any]]) -> None:
+def _render_uuid_help(configs: Sequence[tuple[str, VoteConfig]]) -> None:
     st.info("請使用投票連結進入此頁，例如：/vote?uuid=<投票UUID>")
     st.caption("可用 UUID 清單")
     for uuid, config in configs:
-        topic = str(getattr(config, "name", "未命名投票"))
-        st.markdown(f"- [{topic} ({uuid[:8]})](/vote?uuid={uuid})")
+        st.markdown(f"- [{config.name} ({uuid[:8]})](/vote?uuid={uuid})")
 
 
 def render(service: VoteCoreService) -> None:

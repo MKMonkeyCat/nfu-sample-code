@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import Counter
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -9,6 +10,9 @@ import streamlit as st
 from matplotlib import font_manager
 
 from project.core import VoteCoreService
+from project.core.storage import VoteConfig
+from project.types.models import VoteRecord
+from project.utils.datetime import parse_iso_datetime
 
 
 def _configure_matplotlib_font() -> None:
@@ -24,6 +28,20 @@ def _configure_matplotlib_font() -> None:
 
 _configure_matplotlib_font()
 ALL_ROUNDS_VALUE = "__all_rounds__"
+
+
+def _round_sort_key(config: VoteConfig, round_id: str) -> tuple[int, datetime, str]:
+    if config is None:
+        return (1, datetime.max.replace(tzinfo=UTC), round_id)
+
+    round_config = config.rounds.get(round_id)
+    if round_config is None:
+        return (1, datetime.max.replace(tzinfo=UTC), round_id)
+
+    try:
+        return (0, parse_iso_datetime(round_config.start_time), round_id)
+    except ValueError:
+        return (0, datetime.max.replace(tzinfo=UTC), round_id)
 
 
 def _inject_page_style() -> None:
@@ -97,14 +115,18 @@ def _render_pie_chart(counts: dict[str, int]) -> None:
     plt.close(fig)
 
 
-def _render_line_chart_by_round(records: list[Any], config: Any) -> None:
-    round_ids = sorted({str(record.round) for record in records})
+def _render_line_chart_by_round(records: list[VoteRecord], config: VoteConfig) -> None:
+    round_ids = sorted(
+        {str(record.round) for record in records},
+        key=lambda value: _round_sort_key(config, value),
+    )
     if len(round_ids) < 2:
         st.info("輪次少於 2，暫不顯示折線圖")
         return
 
     round_labels = [
-        config.rounds.get(round_id).name if round_id in config.rounds else round_id for round_id in round_ids
+        voting_round.name if (voting_round := config.rounds.get(round_id)) else round_id
+        for round_id in round_ids
     ]
 
     options = sorted({str(record.option) for record in records})
@@ -130,7 +152,7 @@ def _render_line_chart_by_round(records: list[Any], config: Any) -> None:
     plt.close(fig)
 
 
-def _round_display_name(config: Any, round_uuid: str) -> str:
+def _round_display_name(config: VoteConfig, round_uuid: str) -> str:
     if config is None:
         return round_uuid
     voting_round = config.rounds.get(round_uuid, None)
@@ -162,6 +184,10 @@ def render(service: VoteCoreService) -> None:
 
     all_records = service.storage.read_vote_records(vote_uuid)
     config = service.storage.get_vote_config(vote_uuid)
+    if not config:
+        st.error(f"找不到投票設定：{vote_uuid}")
+        return
+
     if not all_records:
         st.warning("目前沒有投票資料。")
         return
@@ -208,7 +234,7 @@ def render(service: VoteCoreService) -> None:
         st.dataframe(service.analysis.count_rows(summary), width="stretch", hide_index=True)
 
         st.subheader("多輪比較")
-        round_rows = service.analysis.round_rows(records if selected_round == ALL_ROUNDS_VALUE else records)
+        round_rows = service.analysis.round_rows(all_records)
         if config is not None:
             mapped_round_rows: list[dict[str, Any]] = []
             for row in round_rows:
@@ -216,9 +242,18 @@ def render(service: VoteCoreService) -> None:
                 mapped_round_rows.append(
                     {
                         **row,
+                        "_round_uuid": round_uuid,
                         "round_name": _round_display_name(config, round_uuid),
                     }
                 )
+            mapped_round_rows = sorted(
+                mapped_round_rows,
+                key=lambda row: _round_sort_key(config, str(row.get("_round_uuid", ""))),
+            )
+            for row in mapped_round_rows:
+                row.pop("_round_uuid", None)
+            if selected_round != ALL_ROUNDS_VALUE:
+                st.caption("多輪比較固定顯示全部輪次，輪次篩選僅影響上方統計與下方紀錄。")
             st.dataframe(mapped_round_rows, width="stretch", hide_index=True)
         else:
             st.dataframe(round_rows, width="stretch", hide_index=True)

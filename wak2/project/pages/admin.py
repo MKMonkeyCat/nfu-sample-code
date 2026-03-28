@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
 from typing import Any
 from uuid import uuid4
 
@@ -8,6 +7,16 @@ import streamlit as st
 
 from project.core import VoteCoreService
 from project.core.storage import VoteRoundConfig
+from project.utils.datetime import parse_optional_iso_datetime, to_iso_datetime_text
+from project.utils.streamlit_table import (
+    extract_editor_column_values,
+    extract_editor_rows,
+)
+from project.utils.text_normalize import (
+    normalize_option_list,
+    normalize_option_text,
+    parse_options_text,
+)
 
 STATE_OPTIONS = "admin_draft_options"
 STATE_NEW_OPTION = "admin_new_option"
@@ -37,12 +46,8 @@ def _apply_pending_reset() -> None:
     st.session_state[STATE_PENDING_RESET] = False
 
 
-def _normalize_option(text: str) -> str:
-    return " ".join(text.strip().split())
-
-
 def _add_option_from_input() -> None:
-    option = _normalize_option(st.session_state.get(STATE_NEW_OPTION, ""))
+    option = normalize_option_text(st.session_state.get(STATE_NEW_OPTION, ""))
     if not option:
         return
 
@@ -57,73 +62,6 @@ def _add_option_from_input() -> None:
 
 def _clear_options() -> None:
     st.session_state[STATE_OPTIONS] = []
-
-
-def _normalize_options(options: list[str]) -> list[str]:
-    normalized: list[str] = []
-    seen: set[str] = set()
-    for option in options:
-        item = _normalize_option(option)
-        if item and item not in seen:
-            normalized.append(item)
-            seen.add(item)
-    return normalized
-
-
-def _extract_options_from_editor(editor_result: Any) -> list[str]:
-    rows: list[dict[str, object]]
-    if hasattr(editor_result, "to_dict"):
-        # DataFrame path
-        data = editor_result.to_dict("records")
-        rows = data if isinstance(data, list) else []
-    elif isinstance(editor_result, list):
-        rows = [row for row in editor_result if isinstance(row, dict)]
-    else:
-        rows = []
-
-    return _normalize_options([str(row.get("選項", "")) for row in rows])
-
-
-def _extract_rows(editor_result: Any) -> list[dict[str, Any]]:
-    if hasattr(editor_result, "to_dict"):
-        data = editor_result.to_dict("records")
-        return data if isinstance(data, list) else []
-    if isinstance(editor_result, list):
-        return [row for row in editor_result if isinstance(row, dict)]
-    return []
-
-
-def _parse_options_text(raw_text: str) -> set[str]:
-    raw = raw_text.replace("\n", ",").replace("、", ",").replace("，", ",")
-    return {item for item in _normalize_options(raw.split(","))}
-
-
-def _to_editor_datetime(value: str) -> datetime | None:
-    text = value.strip()
-    if not text:
-        return None
-    if text.endswith("Z"):
-        text = text[:-1] + "+00:00"
-    dt = datetime.fromisoformat(text)
-    return dt if dt.tzinfo else dt.replace(tzinfo=UTC)
-
-
-def _to_iso_datetime_text(value: Any) -> str:
-    if value is None:
-        return ""
-
-    if isinstance(value, datetime):
-        dt = value if value.tzinfo else value.replace(tzinfo=UTC)
-        return dt.isoformat(timespec="seconds")
-
-    if hasattr(value, "to_pydatetime"):
-        dt = value.to_pydatetime()
-        if isinstance(dt, datetime):
-            if not dt.tzinfo:
-                dt = dt.replace(tzinfo=UTC)
-            return dt.isoformat(timespec="seconds")
-
-    return str(value).strip()
 
 
 def _normalize_round_uuid(value: Any) -> str:
@@ -201,7 +139,7 @@ def render(service: VoteCoreService) -> None:
             },
         )
 
-        updated_options = _extract_options_from_editor(edited_rows)
+        updated_options = normalize_option_list(extract_editor_column_values(edited_rows, "選項"))
         if updated_options != current_options:
             st.session_state[STATE_OPTIONS] = updated_options
             current_options = updated_options
@@ -231,8 +169,8 @@ def render(service: VoteCoreService) -> None:
                 "uuid": uuid,
                 "topic": config.name,
                 "options": "、".join(sorted(config.options)),
-                "start_time": _to_editor_datetime(config.start_time),
-                "end_time": _to_editor_datetime(config.end_time),
+                "start_time": parse_optional_iso_datetime(config.start_time),
+                "end_time": parse_optional_iso_datetime(config.end_time),
                 "vote_url": f"/vote?uuid={uuid}",
                 "file": str(config.path),
             }
@@ -269,7 +207,7 @@ def render(service: VoteCoreService) -> None:
         },
     )
 
-    edited_table_rows = _extract_rows(edited_rows)
+    edited_table_rows = extract_editor_rows(edited_rows)
     if st.button("儲存主題/選項變更", type="primary"):
         errors: list[str] = []
         success_count = 0
@@ -277,9 +215,9 @@ def render(service: VoteCoreService) -> None:
             vote_uuid = str(row.get("uuid", "")).strip()
             topic = str(row.get("topic", "")).strip()
             options_text = str(row.get("options", ""))
-            options = _parse_options_text(options_text)
-            start_time = _to_iso_datetime_text(row.get("start_time"))
-            end_time = _to_iso_datetime_text(row.get("end_time"))
+            options = parse_options_text(options_text)
+            start_time = to_iso_datetime_text(row.get("start_time"))
+            end_time = to_iso_datetime_text(row.get("end_time"))
 
             try:
                 if not start_time or not end_time:
@@ -342,8 +280,8 @@ def render(service: VoteCoreService) -> None:
             {
                 "round_uuid": round_uuid,
                 "name": item.name,
-                "start_time": _to_editor_datetime(item.start_time),
-                "end_time": _to_editor_datetime(item.end_time),
+                "start_time": parse_optional_iso_datetime(item.start_time),
+                "end_time": parse_optional_iso_datetime(item.end_time),
             }
         )
 
@@ -366,15 +304,15 @@ def render(service: VoteCoreService) -> None:
         },
     )
 
-    edited_round_data = _extract_rows(edited_round_rows)
+    edited_round_data = extract_editor_rows(edited_round_rows)
     if st.button("儲存輪次設定", type="primary"):
         rounds_payload: dict[str, VoteRoundConfig] = {}
         try:
             for row in edited_round_data:
                 raw_uuid = _normalize_round_uuid(row.get("round_uuid"))
                 round_uuid = raw_uuid if raw_uuid else str(uuid4())
-                round_start = _to_iso_datetime_text(row.get("start_time"))
-                round_end = _to_iso_datetime_text(row.get("end_time"))
+                round_start = to_iso_datetime_text(row.get("start_time"))
+                round_end = to_iso_datetime_text(row.get("end_time"))
                 if not round_start or not round_end:
                     raise ValueError("輪次開始/結束時間為必填")
                 rounds_payload[round_uuid] = VoteRoundConfig(
