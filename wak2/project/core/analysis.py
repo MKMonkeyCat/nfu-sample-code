@@ -66,7 +66,12 @@ def build_count_rows(summary: SummaryData) -> list[CountRow]:
 
 def build_vote_table_rows(records: list[VoteRecord]) -> list[VoteTableRow]:
     return [
-        VoteTableRow(round_name=record.round, voter_name=record.name, option=record.option)
+        VoteTableRow(
+            round_name=record.round,
+            voter_name=record.name,
+            option=record.option,
+            vote_time=record.vote_time,
+        )
         for record in records
     ]
 

@@ -9,6 +9,7 @@ class VoteRecord(NamedTuple):
     name: str
     option: str
     round: str = "default"
+    vote_time: str = ""
 
 
 class SummaryData(NamedTuple):
@@ -50,6 +51,7 @@ class VoteTableRow(TypedDict):
     round_name: str
     voter_name: str
     option: str
+    vote_time: str
 
 
 class RoundComparisonRow(TypedDict):

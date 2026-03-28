@@ -18,6 +18,7 @@ class VoteCsvRow:
     name: str = csv_field("姓名")
     option: str = csv_field("選項")
     round: str = csv_field("輪次", default="default")
+    vote_time: str = csv_field("投票時間", default="")
 
 
 @dataclass
@@ -267,8 +268,14 @@ class VoteCoreSystem:
             raise ValueError("Round not found in this vote")
 
         manager = self.votes[config.path]
+        now_iso = datetime.now(UTC).isoformat(timespec="seconds")
         manager.append(
-            VoteCsvRow(name=voter_name.strip(), option=option.strip(), round=round_name.strip() or "default")
+            VoteCsvRow(
+                name=voter_name.strip(),
+                option=option.strip(),
+                round=round_name.strip() or "default",
+                vote_time=now_iso,
+            )
         )
 
     def read_vote_records(self, uuid: str, round_name: str | None = None) -> list[VoteRecord]:
@@ -280,7 +287,14 @@ class VoteCoreSystem:
         for row in self.votes[config.path].read_all():
             if round_name is not None and row.round != round_name:
                 continue
-            records.append(VoteRecord(name=row.name, option=row.option, round=row.round))
+            records.append(
+                VoteRecord(
+                    name=row.name,
+                    option=row.option,
+                    round=row.round,
+                    vote_time=row.vote_time,
+                )
+            )
         return records
 
     def save_vote_configs(self, config_path: Path) -> None:
