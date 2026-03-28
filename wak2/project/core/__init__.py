@@ -5,6 +5,7 @@ into smaller files to keep each file maintainable.
 """
 
 from project.core.analysis import (
+    VoteAnalysisService,
     build_summary,
     compare_rounds,
     count_options,
@@ -27,15 +28,27 @@ from project.core.constants import (
     ROUND_SINGLE,
 )
 from project.core.storage import (
+    VoteStorageService,
     add_vote,
     delete_votes_by_indices,
-    ensure_csv,
     read_votes,
     validate_round_name,
     validate_vote_data,
 )
 
+
+class VoteCoreService:
+    """Facade service that composes storage and analysis services."""
+
+    def __init__(self) -> None:
+        self.storage = VoteStorageService()
+        self.analysis = VoteAnalysisService(self.storage)
+
+
 __all__ = [
+    "VoteStorageService",
+    "VoteAnalysisService",
+    "VoteCoreService",
     "ROUND_OPTIONS",
     "ROUND_SINGLE",
     "MODE_MULTI",
@@ -46,7 +59,6 @@ __all__ = [
     "sort_round_names",
     "sort_records",
     "sort_records_for_detail",
-    "ensure_csv",
     "add_vote",
     "read_votes",
     "get_all_rounds",

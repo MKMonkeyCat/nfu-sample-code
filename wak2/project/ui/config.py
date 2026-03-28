@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from project import core
-
 DATA_DIR = Path("data")
 CSV_FILE = DATA_DIR / "votes.csv"
 DRINK_OPTIONS = ["奶茶", "紅茶", "綠茶", "拿鐵", "烏龍茶", "其他"]
@@ -20,4 +18,4 @@ COLOR_PALETTE = {
 def init_app() -> None:
     """初始化應用"""
     DATA_DIR.mkdir(exist_ok=True)
-    core.ensure_csv(CSV_FILE)
+    # core.ensure_csv(CSV_FILE)
