@@ -1,11 +1,28 @@
 from __future__ import annotations
 
+from collections import Counter
+from pathlib import Path
 from typing import Any
 
 import matplotlib.pyplot as plt
 import streamlit as st
+from matplotlib import font_manager
 
 from project.core import VoteCoreService
+
+
+def _configure_matplotlib_font() -> None:
+    font_path = Path(__file__).resolve().parents[2] / "assets" / "NotoSansJP-VariableFont_wght.ttf"
+    if not font_path.exists():
+        return
+
+    font_manager.fontManager.addfont(str(font_path))
+    font_name = font_manager.FontProperties(fname=str(font_path)).get_name()
+    plt.rcParams["font.sans-serif"] = [font_name, "DejaVu Sans"]
+    plt.rcParams["axes.unicode_minus"] = False
+
+
+_configure_matplotlib_font()
 
 
 def _render_bar_chart(counts: dict[str, int], modes: list[str]) -> None:
@@ -29,6 +46,39 @@ def _render_pie_chart(counts: dict[str, int]) -> None:
     fig, ax = plt.subplots(figsize=(6, 6))
     ax.pie(values, labels=labels, autopct="%1.1f%%", startangle=90)
     ax.set_title("選項比例")
+    st.pyplot(fig)
+    plt.close(fig)
+
+
+def _render_line_chart_by_round(records: list[Any], config: Any) -> None:
+    round_ids = sorted({str(record.round) for record in records})
+    if len(round_ids) < 2:
+        st.info("輪次少於 2，暫不顯示折線圖")
+        return
+
+    round_labels = [
+        config.rounds.get(round_id).name if round_id in config.rounds else round_id for round_id in round_ids
+    ]
+
+    options = sorted({str(record.option) for record in records})
+    series_map: dict[str, list[int]] = {option: [] for option in options}
+
+    for round_id in round_ids:
+        one_round = [record for record in records if str(record.round) == round_id]
+        counts = Counter(str(record.option) for record in one_round)
+        for option in options:
+            series_map[option].append(int(counts.get(option, 0)))
+
+    fig, ax = plt.subplots(figsize=(9, 4.8))
+    for option, values in series_map.items():
+        ax.plot(round_labels, values, marker="o", linewidth=2, label=option)
+
+    ax.set_title("多輪票數趨勢")
+    ax.set_xlabel("輪次")
+    ax.set_ylabel("票數")
+    ax.grid(axis="y", linestyle="--", alpha=0.35)
+    ax.legend(title="選項", bbox_to_anchor=(1.02, 1), loc="upper left")
+    plt.tight_layout()
     st.pyplot(fig)
     plt.close(fig)
 
@@ -111,3 +161,5 @@ def render(service: VoteCoreService) -> None:
     st.subheader("圖表")
     _render_bar_chart(summary.counts, summary.modes)
     _render_pie_chart(summary.counts)
+    if config is not None:
+        _render_line_chart_by_round(records, config)

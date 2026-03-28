@@ -126,6 +126,21 @@ def _to_iso_datetime_text(value: Any) -> str:
     return str(value).strip()
 
 
+def _normalize_round_uuid(value: Any) -> str:
+    if value is None:
+        return ""
+
+    text = str(value).strip()
+    if not text:
+        return ""
+
+    # Streamlit data_editor may return None-like strings for new rows.
+    if text.lower() in {"none", "null", "nan"}:
+        return ""
+
+    return text
+
+
 def render(service: VoteCoreService) -> None:
     _init_state()
     _apply_pending_reset()
@@ -356,7 +371,7 @@ def render(service: VoteCoreService) -> None:
         rounds_payload: dict[str, VoteRoundConfig] = {}
         try:
             for row in edited_round_data:
-                raw_uuid = str(row.get("round_uuid", "")).strip()
+                raw_uuid = _normalize_round_uuid(row.get("round_uuid"))
                 round_uuid = raw_uuid if raw_uuid else str(uuid4())
                 round_start = _to_iso_datetime_text(row.get("start_time"))
                 round_end = _to_iso_datetime_text(row.get("end_time"))

@@ -229,16 +229,23 @@ class VoteCoreSystem:
         if not _is_time_in_window(clock, config.start_time, config.end_time):
             return None
 
-        sorted_rounds = sorted(
+        # Reverse-order strategy: newer rounds have higher priority.
+        sorted_rounds_desc = sorted(
             config.rounds.items(),
-            key=lambda item: item[1].start_time or "",
+            key=lambda item: (
+                _parse_datetime(item[1].start_time),
+                _parse_datetime(item[1].end_time),
+                item[0],
+            ),
+            reverse=True,
         )
-        for round_uuid, round_config in sorted_rounds:
+        for round_uuid, round_config in sorted_rounds_desc:
             if _is_time_in_window(clock, round_config.start_time, round_config.end_time):
                 return round_uuid, round_config
 
-        if len(sorted_rounds) == 1:
-            return sorted_rounds[0]
+        if len(config.rounds) == 1:
+            only_round_uuid = next(iter(config.rounds))
+            return only_round_uuid, config.rounds[only_round_uuid]
         return None
 
     def get_round_name(self, uuid: str, round_uuid: str) -> str:
