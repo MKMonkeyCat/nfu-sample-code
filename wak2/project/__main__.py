@@ -55,4 +55,29 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    from pathlib import Path
+
+    args = set(sys.argv[1:])
+    if "--web" in args:
+        import subprocess
+
+        import project.web as project_web
+
+        script_path = Path(project_web.__file__)
+        cmd = [
+            sys.executable,
+            "-m",
+            "streamlit",
+            "run",
+            str(script_path),
+            "--server.headless",
+            "true",
+        ]
+
+        try:
+            subprocess.run(cmd, check=True)
+        except KeyboardInterrupt:
+            pass
+    else:
+        main()
