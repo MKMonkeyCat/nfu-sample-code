@@ -13,6 +13,9 @@ from project.core import VoteCoreService
 from project.core.storage import VoteConfig
 from project.types.models import VoteRecord
 from project.utils.datetime import parse_iso_datetime
+from project.utils.streamlit_ui import render_empty_state, render_page_intro
+
+ALL_ROUNDS_VALUE = "__all_rounds__"
 
 
 def _configure_matplotlib_font() -> None:
@@ -27,10 +30,9 @@ def _configure_matplotlib_font() -> None:
 
 
 _configure_matplotlib_font()
-ALL_ROUNDS_VALUE = "__all_rounds__"
 
 
-def _round_sort_key(config: VoteConfig, round_id: str) -> tuple[int, datetime, str]:
+def _round_sort_key(config: VoteConfig | None, round_id: str) -> tuple[int, datetime, str]:
     if config is None:
         return (1, datetime.max.replace(tzinfo=UTC), round_id)
 
@@ -48,12 +50,6 @@ def _inject_page_style() -> None:
     st.markdown(
         """
         <style>
-        .analyze-note {
-            color: #4b5563;
-            font-size: 0.95rem;
-            margin-top: -0.2rem;
-            margin-bottom: 0.8rem;
-        }
         .analyze-summary {
             border: 1px solid #e5e7eb;
             border-radius: 12px;
@@ -67,10 +63,10 @@ def _inject_page_style() -> None:
             margin-bottom: 0.35rem;
         }
         .analyze-summary-value {
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             font-weight: 700;
             color: #111827;
-            line-height: 1.25;
+            line-height: 1.35;
         }
         </style>
         """,
@@ -97,7 +93,7 @@ def _render_bar_chart(counts: dict[str, int], modes: list[str]) -> None:
 
     fig, ax = plt.subplots(figsize=(8, 4))
     ax.bar(labels, values, color=colors)
-    ax.set_title("各選項票數")
+    ax.set_title("選項票數分布")
     ax.set_xlabel("選項")
     ax.set_ylabel("票數")
     st.pyplot(fig)
@@ -110,7 +106,7 @@ def _render_pie_chart(counts: dict[str, int]) -> None:
 
     fig, ax = plt.subplots(figsize=(6, 6))
     ax.pie(values, labels=labels, autopct="%1.1f%%", startangle=90)
-    ax.set_title("選項比例")
+    ax.set_title("票數比例")
     st.pyplot(fig)
     plt.close(fig)
 
@@ -124,11 +120,7 @@ def _render_line_chart_by_round(records: list[VoteRecord], config: VoteConfig) -
         st.info("輪次少於 2，暫不顯示折線圖")
         return
 
-    round_labels = [
-        voting_round.name if (voting_round := config.rounds.get(round_id)) else round_id
-        for round_id in round_ids
-    ]
-
+    round_labels = [_round_display_name(config, round_id) for round_id in round_ids]
     options = sorted({str(record.option) for record in records})
     series_map: dict[str, list[int]] = {option: [] for option in options}
 
@@ -142,7 +134,7 @@ def _render_line_chart_by_round(records: list[VoteRecord], config: VoteConfig) -
     for option, values in series_map.items():
         ax.plot(round_labels, values, marker="o", linewidth=2, label=option)
 
-    ax.set_title("多輪票數趨勢")
+    ax.set_title("多輪票數變化")
     ax.set_xlabel("輪次")
     ax.set_ylabel("票數")
     ax.grid(axis="y", linestyle="--", alpha=0.35)
@@ -152,26 +144,59 @@ def _render_line_chart_by_round(records: list[VoteRecord], config: VoteConfig) -
     plt.close(fig)
 
 
-def _round_display_name(config: VoteConfig, round_uuid: str) -> str:
+def _round_display_name(config: VoteConfig | None, round_uuid: str) -> str:
     if config is None:
         return round_uuid
-    voting_round = config.rounds.get(round_uuid, None)
+    voting_round = config.rounds.get(round_uuid)
     return voting_round.name if voting_round else round_uuid
+
+
+def _format_modes_text(modes: list[str], mode_count: int) -> str:
+    if not modes or mode_count <= 0:
+        return "目前尚未形成眾數"
+    if len(modes) == 1:
+        return f"目前眾數是「{modes[0]}」，共有 {mode_count} 票"
+    return f"目前為並列眾數：{'、'.join(modes)}，各有 {mode_count} 票"
+
+
+def _build_round_change_text(all_records: list[VoteRecord], config: VoteConfig) -> str | None:
+    round_ids = sorted({str(record.round) for record in all_records}, key=lambda value: _round_sort_key(config, value))
+    if len(round_ids) < 2:
+        return None
+
+    previous_round_id = round_ids[-2]
+    current_round_id = round_ids[-1]
+    previous_summary = _summarize_round(all_records, previous_round_id)
+    current_summary = _summarize_round(all_records, current_round_id)
+
+    previous_name = _round_display_name(config, previous_round_id)
+    current_name = _round_display_name(config, current_round_id)
+    previous_modes = set(previous_summary["modes"])
+    current_modes = set(current_summary["modes"])
+
+    if previous_modes == current_modes:
+        return f"{previous_name} 到 {current_name} 的眾數沒有改變"
+    return f"{previous_name} 的眾數是「{'、'.join(previous_summary['modes'])}」，到了 {current_name} 變成「{'、'.join(current_summary['modes'])}」"
+
+
+def _summarize_round(records: list[VoteRecord], round_id: str) -> dict[str, Any]:
+    one_round = [record for record in records if str(record.round) == round_id]
+    counts = Counter(record.option for record in one_round)
+    if not counts:
+        return {"modes": [], "mode_count": 0}
+
+    mode_count = max(counts.values())
+    modes = sorted([option for option, count in counts.items() if count == mode_count])
+    return {"modes": modes, "mode_count": mode_count}
 
 
 def render(service: VoteCoreService) -> None:
     _inject_page_style()
-
-    st.header("分析頁")
-    st.markdown(
-        "<div class='analyze-note'>可切換投票主題與輪次篩選，所有統計、表格與圖表會同步更新。</div>",
-        unsafe_allow_html=True,
-    )
+    render_page_intro("分析頁", "切換投票主題與輪次後，統計、明細與圖表會一起更新")
 
     configs = service.storage.list_vote_configs()
-
     if not configs:
-        st.info("目前沒有投票活動，請先到管理頁建立。")
+        render_empty_state("目前沒有投票活動，請先到管理頁建立")
         return
 
     filter_col1, filter_col2 = st.columns([2, 1])
@@ -185,21 +210,19 @@ def render(service: VoteCoreService) -> None:
     all_records = service.storage.read_vote_records(vote_uuid)
     config = service.storage.get_vote_config(vote_uuid)
     if not config:
-        st.error(f"找不到投票設定：{vote_uuid}")
+        render_empty_state(f"找不到投票設定：{vote_uuid}", level="error")
         return
 
     if not all_records:
-        st.warning("目前沒有投票資料。")
+        render_empty_state("目前沒有投票資料", hint="先到投票頁累積資料，這裡才會顯示統計", level="warning")
         return
 
-    round_ids = sorted({str(record.round) for record in all_records})
+    round_ids = sorted({str(record.round) for record in all_records}, key=lambda value: _round_sort_key(config, value))
     with filter_col2:
         selected_round = st.selectbox(
             "輪次篩選",
             options=[ALL_ROUNDS_VALUE, *round_ids],
-            format_func=lambda value: (
-                "全部輪次" if value == ALL_ROUNDS_VALUE else _round_display_name(config, str(value))
-            ),
+            format_func=lambda value: "全部輪次" if value == ALL_ROUNDS_VALUE else _round_display_name(config, str(value)),
         )
 
     records = (
@@ -209,71 +232,79 @@ def render(service: VoteCoreService) -> None:
     )
 
     if not records:
-        st.warning("目前篩選條件下沒有投票資料。")
+        render_empty_state("目前篩選條件下沒有投票資料", level="warning")
         return
 
     statistics = service.analysis.statistics(records)
     summary = service.analysis.summarize(records)
+    mode_sentence = _format_modes_text(summary.modes, summary.mode_count)
+    round_change_text = _build_round_change_text(all_records, config) if selected_round == ALL_ROUNDS_VALUE else None
+
+    st.markdown(
+        f"""
+        <div class="analyze-summary">
+            <div class="analyze-summary-title">結論</div>
+            <div class="analyze-summary-value">{mode_sentence}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    if round_change_text:
+        st.info(f"多輪變化：{round_change_text}")
 
     metric_col1, metric_col2, metric_col3, metric_col4 = st.columns(4)
     metric_col1.metric("總票數", statistics.total)
-    metric_col2.metric("投票者數", statistics.unique_voters)
+    metric_col2.metric("投票人數", statistics.unique_voters)
     metric_col3.metric("眾數票數", statistics.mode_count)
-    metric_col4.metric("選項種類", statistics.unique_options)
+    metric_col4.metric("選項數量", statistics.unique_options)
 
     card_col1, card_col2 = st.columns(2)
     with card_col1:
         _summary_card("眾數", "、".join(summary.modes) if summary.modes else "無")
     with card_col2:
-        _summary_card("最少選項", "、".join(summary.least) if summary.least else "無")
+        _summary_card("最少票選項", "、".join(summary.least) if summary.least else "無")
 
-    tab_stats, tab_records, tab_charts = st.tabs(["統計摘要", "投票紀錄", "圖表分析"])
+    tab_stats, tab_records, tab_charts = st.tabs(["統計表", "投票明細", "圖表"])
 
     with tab_stats:
         st.subheader("選項統計")
         st.dataframe(service.analysis.count_rows(summary), width="stretch", hide_index=True)
 
-        st.subheader("多輪比較")
+        st.subheader("輪次比較")
         round_rows = service.analysis.round_rows(all_records)
-        if config is not None:
-            mapped_round_rows: list[dict[str, Any]] = []
-            for row in round_rows:
-                round_uuid = str(row.get("round_name", ""))
-                mapped_round_rows.append(
-                    {
-                        **row,
-                        "_round_uuid": round_uuid,
-                        "round_name": _round_display_name(config, round_uuid),
-                    }
-                )
-            mapped_round_rows = sorted(
-                mapped_round_rows,
-                key=lambda row: _round_sort_key(config, str(row.get("_round_uuid", ""))),
+        mapped_round_rows: list[dict[str, Any]] = []
+        for row in round_rows:
+            round_uuid = str(row.get("round_name", ""))
+            mapped_round_rows.append(
+                {
+                    **row,
+                    "_round_uuid": round_uuid,
+                    "round_name": _round_display_name(config, round_uuid),
+                }
             )
-            for row in mapped_round_rows:
-                row.pop("_round_uuid", None)
-            if selected_round != ALL_ROUNDS_VALUE:
-                st.caption("多輪比較固定顯示全部輪次，輪次篩選僅影響上方統計與下方紀錄。")
-            st.dataframe(mapped_round_rows, width="stretch", hide_index=True)
-        else:
-            st.dataframe(round_rows, width="stretch", hide_index=True)
+        mapped_round_rows = sorted(
+            mapped_round_rows,
+            key=lambda row: _round_sort_key(config, str(row.get("_round_uuid", ""))),
+        )
+        for row in mapped_round_rows:
+            row.pop("_round_uuid", None)
+        if selected_round != ALL_ROUNDS_VALUE:
+            st.caption("輪次比較固定顯示全部輪次，方便觀察整體變化。")
+        st.dataframe(mapped_round_rows, width="stretch", hide_index=True)
 
     with tab_records:
-        st.subheader("投票紀錄")
+        st.subheader("投票明細")
         vote_rows = service.analysis.vote_rows(records)
-        if config is not None:
-            mapped_vote_rows: list[dict[str, Any]] = []
-            for row in vote_rows:
-                round_uuid = str(row.get("round_name", ""))
-                mapped_vote_rows.append(
-                    {
-                        **row,
-                        "round_name": _round_display_name(config, round_uuid),
-                    }
-                )
-            st.dataframe(mapped_vote_rows, width="stretch", hide_index=True)
-        else:
-            st.dataframe(vote_rows, width="stretch", hide_index=True)
+        mapped_vote_rows: list[dict[str, Any]] = []
+        for row in vote_rows:
+            round_uuid = str(row.get("round_name", ""))
+            mapped_vote_rows.append(
+                {
+                    **row,
+                    "round_name": _round_display_name(config, round_uuid),
+                }
+            )
+        st.dataframe(mapped_vote_rows, width="stretch", hide_index=True)
 
     with tab_charts:
         chart_col1, chart_col2 = st.columns(2)
@@ -282,5 +313,5 @@ def render(service: VoteCoreService) -> None:
         with chart_col2:
             _render_pie_chart(summary.counts)
 
-        if config is not None and selected_round == ALL_ROUNDS_VALUE:
+        if selected_round == ALL_ROUNDS_VALUE:
             _render_line_chart_by_round(all_records, config)

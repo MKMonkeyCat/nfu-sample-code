@@ -47,7 +47,7 @@ class VoteConfig:
             rounds["default"] = VoteRoundConfig(
                 name="預設輪次",
                 start_time=to_iso_seconds_utc(now),
-                end_time=to_iso_seconds_utc(now + timedelta(days=3650)),
+                end_time=to_iso_seconds_utc(now + timedelta(minutes=30)),
             )
 
         start_time = str(data.get("start_time", "")).strip()
@@ -147,7 +147,7 @@ class VoteCoreSystem:
         default_round_uuid = str(uuid4())
         now = datetime.now(UTC)
         default_start = to_iso_seconds_utc(now)
-        default_end = to_iso_seconds_utc(now + timedelta(days=3650))
+        default_end = to_iso_seconds_utc(now + timedelta(minutes=30))
 
         config = VoteConfig(
             name=name,
