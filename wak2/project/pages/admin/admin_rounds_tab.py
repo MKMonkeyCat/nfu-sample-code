@@ -8,18 +8,19 @@ import streamlit as st
 
 from project.core import VoteCoreService
 from project.core.storage import VoteConfig, VoteRoundConfig
-from project.pages.admin_shared import (
+from project.utils.datetime import parse_optional_iso_datetime, to_iso_datetime_text
+from project.utils.streamlit_table import extract_editor_rows
+from project.utils.streamlit_ui import render_callout, render_empty_state
+
+from .admin_shared import (
     STATE_ROUND_DELETE_RESET_PENDING,
     STATE_ROUND_DELETE_SELECTION,
     STATE_ROUND_DRAFT_IDS,
     STATE_ROUND_DRAFT_ROWS,
-    STATE_ROUND_EDITOR_VERSION,
     STATE_ROUND_DRAFT_VOTE_UUID,
+    STATE_ROUND_EDITOR_VERSION,
     STATE_ROUND_NOTICE,
 )
-from project.utils.datetime import parse_optional_iso_datetime, to_iso_datetime_text
-from project.utils.streamlit_table import extract_editor_rows
-from project.utils.streamlit_ui import render_callout, render_empty_state
 
 
 def _build_round_rows(config: VoteConfig) -> list[dict[str, Any]]:
@@ -46,7 +47,9 @@ def _reset_round_draft(vote_uuid: str, config: VoteConfig) -> None:
     st.session_state[STATE_ROUND_DRAFT_VOTE_UUID] = vote_uuid
     st.session_state[STATE_ROUND_DRAFT_ROWS] = _build_round_rows(config)
     st.session_state[STATE_ROUND_DRAFT_IDS] = [round_uuid for round_uuid, _ in config.rounds.items()]
-    st.session_state[STATE_ROUND_EDITOR_VERSION] = int(st.session_state.get(STATE_ROUND_EDITOR_VERSION, 0)) + 1
+    st.session_state[STATE_ROUND_EDITOR_VERSION] = (
+        int(st.session_state.get(STATE_ROUND_EDITOR_VERSION, 0)) + 1
+    )
     st.session_state[STATE_ROUND_DELETE_RESET_PENDING] = True
 
 
@@ -61,7 +64,9 @@ def _reset_round_draft_to_first_round(vote_uuid: str) -> None:
         }
     ]
     st.session_state[STATE_ROUND_DRAFT_IDS] = [""]
-    st.session_state[STATE_ROUND_EDITOR_VERSION] = int(st.session_state.get(STATE_ROUND_EDITOR_VERSION, 0)) + 1
+    st.session_state[STATE_ROUND_EDITOR_VERSION] = (
+        int(st.session_state.get(STATE_ROUND_EDITOR_VERSION, 0)) + 1
+    )
     st.session_state[STATE_ROUND_DELETE_RESET_PENDING] = True
 
 
@@ -114,7 +119,9 @@ def _append_next_round(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return next_rows
 
 
-def _remove_selected_rounds(rows: list[dict[str, Any]], ids: list[str]) -> tuple[list[dict[str, Any]], list[str]]:
+def _remove_selected_rounds(
+    rows: list[dict[str, Any]], ids: list[str]
+) -> tuple[list[dict[str, Any]], list[str]]:
     kept_rows: list[dict[str, Any]] = []
     kept_ids: list[str] = []
     for index, row in enumerate(rows):
@@ -139,7 +146,9 @@ def _save_round_changes(
 
     for row in rows:
         raw_uuid = str(row.get("round_uuid", "")).strip()
-        round_uuid = raw_uuid if raw_uuid and raw_uuid.lower() not in {"none", "null", "nan"} else str(uuid4())
+        round_uuid = (
+            raw_uuid if raw_uuid and raw_uuid.lower() not in {"none", "null", "nan"} else str(uuid4())
+        )
         round_start = to_iso_datetime_text(row.get("start_time"))
         round_end = to_iso_datetime_text(row.get("end_time"))
         if not round_start or not round_end:
@@ -251,7 +260,9 @@ def render_rounds_tab(service: VoteCoreService, configs: list[tuple[str, VoteCon
         st.session_state[STATE_ROUND_DELETE_RESET_PENDING] = False
     else:
         saved_selection = list(st.session_state.get(STATE_ROUND_DELETE_SELECTION, []))
-        cleaned_selection = [index for index in saved_selection if isinstance(index, int) and 0 <= index < len(delete_options)]
+        cleaned_selection = [
+            index for index in saved_selection if isinstance(index, int) and 0 <= index < len(delete_options)
+        ]
         if cleaned_selection != saved_selection:
             st.session_state[STATE_ROUND_DELETE_SELECTION] = cleaned_selection
 
@@ -273,7 +284,9 @@ def render_rounds_tab(service: VoteCoreService, configs: list[tuple[str, VoteCon
             next_ids.append("")
             st.session_state[STATE_ROUND_DRAFT_ROWS] = next_rows
             st.session_state[STATE_ROUND_DRAFT_IDS] = next_ids
-            st.session_state[STATE_ROUND_EDITOR_VERSION] = int(st.session_state.get(STATE_ROUND_EDITOR_VERSION, 0)) + 1
+            st.session_state[STATE_ROUND_EDITOR_VERSION] = (
+                int(st.session_state.get(STATE_ROUND_EDITOR_VERSION, 0)) + 1
+            )
             st.rerun()
     with delete_col:
         selected_count = len(selected_delete_indexes)
@@ -289,7 +302,9 @@ def render_rounds_tab(service: VoteCoreService, configs: list[tuple[str, VoteCon
             next_rows, next_ids = _remove_selected_rounds(rows_with_delete_flag, current_ids)
             st.session_state[STATE_ROUND_DRAFT_ROWS] = next_rows
             st.session_state[STATE_ROUND_DRAFT_IDS] = next_ids
-            st.session_state[STATE_ROUND_EDITOR_VERSION] = int(st.session_state.get(STATE_ROUND_EDITOR_VERSION, 0)) + 1
+            st.session_state[STATE_ROUND_EDITOR_VERSION] = (
+                int(st.session_state.get(STATE_ROUND_EDITOR_VERSION, 0)) + 1
+            )
             st.session_state[STATE_ROUND_DELETE_RESET_PENDING] = True
             st.rerun()
     with reset_col:
@@ -324,7 +339,9 @@ def render_rounds_tab(service: VoteCoreService, configs: list[tuple[str, VoteCon
             st.session_state[STATE_ROUND_NOTICE] = {
                 "message": message,
                 "config_path": str(service.storage.config_path.resolve()),
-                "data_path": str((updated_config.path if updated_config is not None else config.path).resolve()),
+                "data_path": str(
+                    (updated_config.path if updated_config is not None else config.path).resolve()
+                ),
             }
             st.rerun()
         except ValueError as exc:

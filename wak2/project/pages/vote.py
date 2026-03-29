@@ -6,7 +6,11 @@ import streamlit as st
 
 from project.core import VoteCoreService
 from project.core.storage import VoteConfig
-from project.utils.streamlit_ui import render_callout, render_empty_state, render_page_intro
+from project.utils.streamlit_ui import (
+    render_callout,
+    render_empty_state,
+    render_page_intro,
+)
 
 
 def _get_uuid_from_query() -> str:
@@ -46,7 +50,9 @@ def render(service: VoteCoreService) -> None:
 
     active_round = service.storage.get_active_round(vote_uuid)
     if active_round is None:
-        render_empty_state("目前沒有可用輪次。", hint="可能尚未設定輪次時間，或現在不在投票開放區間內。", level="warning")
+        render_empty_state(
+            "目前沒有可用輪次。", hint="可能尚未設定輪次時間，或現在不在投票開放區間內。", level="warning"
+        )
         return
 
     round_uuid, round_config = active_round

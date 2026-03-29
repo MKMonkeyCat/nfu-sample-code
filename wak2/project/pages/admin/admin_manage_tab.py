@@ -4,9 +4,14 @@ import streamlit as st
 
 from project.core import VoteCoreService
 from project.core.storage import VoteConfig
-from project.pages.admin_shared import build_vote_rows, delete_selected_votes, save_vote_table_changes
 from project.utils.streamlit_table import extract_editor_rows
 from project.utils.streamlit_ui import render_callout, render_empty_state
+
+from .admin_shared import (
+    build_vote_rows,
+    delete_selected_votes,
+    save_vote_table_changes,
+)
 
 
 def render_manage_tab(service: VoteCoreService, configs: list[tuple[str, VoteConfig]]) -> None:
@@ -40,12 +45,11 @@ def render_manage_tab(service: VoteCoreService, configs: list[tuple[str, VoteCon
             "start_time": st.column_config.DatetimeColumn("開始時間"),
             "end_time": st.column_config.DatetimeColumn("結束時間"),
             "vote_url": st.column_config.TextColumn("投票連結"),
-        }
+        },
     )
 
-
     rows = extract_editor_rows(edited_rows)
-    
+
     raw_map = {r["uuid"]: r for r in raw_rows}
 
     final_rows = []
@@ -53,7 +57,6 @@ def render_manage_tab(service: VoteCoreService, configs: list[tuple[str, VoteCon
         uid = r.get("uuid")
         if uid in raw_map:
             final_rows.append({**raw_map[uid], **r})
-
 
     action_col, danger_col = st.columns([1, 1])
     with action_col:

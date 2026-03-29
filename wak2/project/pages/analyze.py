@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import html
 from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
@@ -78,8 +79,8 @@ def _summary_card(title: str, value: str) -> None:
     st.markdown(
         f"""
         <div class="analyze-summary">
-            <div class="analyze-summary-title">{title}</div>
-            <div class="analyze-summary-value">{value}</div>
+            <div class="analyze-summary-title">{html.escape(title)}</div>
+            <div class="analyze-summary-value">{html.escape(value)}</div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -160,7 +161,9 @@ def _format_modes_text(modes: list[str], mode_count: int) -> str:
 
 
 def _build_round_change_text(all_records: list[VoteRecord], config: VoteConfig) -> str | None:
-    round_ids = sorted({str(record.round) for record in all_records}, key=lambda value: _round_sort_key(config, value))
+    round_ids = sorted(
+        {str(record.round) for record in all_records}, key=lambda value: _round_sort_key(config, value)
+    )
     if len(round_ids) < 2:
         return None
 
@@ -217,12 +220,16 @@ def render(service: VoteCoreService) -> None:
         render_empty_state("目前沒有投票資料", hint="先到投票頁累積資料，這裡才會顯示統計", level="warning")
         return
 
-    round_ids = sorted({str(record.round) for record in all_records}, key=lambda value: _round_sort_key(config, value))
+    round_ids = sorted(
+        {str(record.round) for record in all_records}, key=lambda value: _round_sort_key(config, value)
+    )
     with filter_col2:
         selected_round = st.selectbox(
             "輪次篩選",
             options=[ALL_ROUNDS_VALUE, *round_ids],
-            format_func=lambda value: "全部輪次" if value == ALL_ROUNDS_VALUE else _round_display_name(config, str(value)),
+            format_func=lambda value: (
+                "全部輪次" if value == ALL_ROUNDS_VALUE else _round_display_name(config, str(value))
+            ),
         )
 
     records = (
@@ -238,13 +245,15 @@ def render(service: VoteCoreService) -> None:
     statistics = service.analysis.statistics(records)
     summary = service.analysis.summarize(records)
     mode_sentence = _format_modes_text(summary.modes, summary.mode_count)
-    round_change_text = _build_round_change_text(all_records, config) if selected_round == ALL_ROUNDS_VALUE else None
+    round_change_text = (
+        _build_round_change_text(all_records, config) if selected_round == ALL_ROUNDS_VALUE else None
+    )
 
     st.markdown(
         f"""
         <div class="analyze-summary">
             <div class="analyze-summary-title">結論</div>
-            <div class="analyze-summary-value">{mode_sentence}</div>
+            <div class="analyze-summary-value">{html.escape(mode_sentence)}</div>
         </div>
         """,
         unsafe_allow_html=True,

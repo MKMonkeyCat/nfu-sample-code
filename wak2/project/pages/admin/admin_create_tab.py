@@ -3,7 +3,11 @@ from __future__ import annotations
 import streamlit as st
 
 from project.core import VoteCoreService
-from project.pages.admin_shared import (
+from project.utils.streamlit_table import extract_editor_column_values
+from project.utils.streamlit_ui import render_callout, render_empty_state
+from project.utils.text_normalize import normalize_option_list
+
+from .admin_shared import (
     DEFAULT_QUICK_OPTIONS,
     STATE_NEW_OPTION,
     STATE_OPTIONS,
@@ -14,9 +18,6 @@ from project.pages.admin_shared import (
     clear_options,
     count_manual_options,
 )
-from project.utils.streamlit_table import extract_editor_column_values
-from project.utils.streamlit_ui import render_callout, render_empty_state
-from project.utils.text_normalize import normalize_option_list
 
 
 def render_create_tab(service: VoteCoreService) -> None:

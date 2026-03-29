@@ -3,11 +3,12 @@ from __future__ import annotations
 import streamlit as st
 
 from project.core import VoteCoreService
-from project.pages.admin_create_tab import render_create_tab
-from project.pages.admin_manage_tab import render_manage_tab
-from project.pages.admin_rounds_tab import render_rounds_tab
-from project.pages.admin_shared import apply_pending_reset, init_state
 from project.utils.streamlit_ui import render_page_intro
+
+from .admin_create_tab import render_create_tab
+from .admin_manage_tab import render_manage_tab
+from .admin_rounds_tab import render_rounds_tab
+from .admin_shared import apply_pending_reset, init_state
 
 
 def render(service: VoteCoreService) -> None:

@@ -7,7 +7,11 @@ import streamlit as st
 from project.core import VoteCoreService
 from project.core.storage import VoteConfig
 from project.utils.datetime import parse_optional_iso_datetime, to_iso_datetime_text
-from project.utils.text_normalize import normalize_option_list, normalize_option_text, parse_options_text
+from project.utils.text_normalize import (
+    normalize_option_list,
+    normalize_option_text,
+    parse_options_text,
+)
 
 STATE_OPTIONS = "admin_draft_options"
 STATE_NEW_OPTION = "admin_new_option"
