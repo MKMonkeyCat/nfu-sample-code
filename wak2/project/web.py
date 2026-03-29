@@ -27,9 +27,8 @@ def _render_home(service: VoteCoreService) -> None:
 
     with right_col:
         configs = service.storage.list_vote_configs()
-        st.markdown("### 目前投票主題")
-        st.metric(label="", value=f"{len(configs)} 個")
-
+        st.markdown("### 概述")
+        st.metric(label="目前投票主題", value=f"{len(configs)} 個")
 
 def run_web() -> None:
     st.set_page_config(page_title="Mode Vote System", page_icon="🗳️", layout="wide")
