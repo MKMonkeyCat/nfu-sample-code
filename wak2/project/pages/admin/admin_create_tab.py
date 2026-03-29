@@ -26,7 +26,7 @@ def render_create_tab(service: VoteCoreService) -> None:
     manual_option_count = count_manual_options(current_options)
     can_submit = bool(topic) and len(current_options) >= 2 and manual_option_count >= 2
 
-    control_col, preview_col = st.columns([2, 1])
+    control_col, preview_col = st.columns([2, 1], vertical_alignment="bottom")
     with control_col:
         st.subheader("建立投票")
         st.text_input("投票主題", placeholder="例如：最喜歡的飲料", key=STATE_VOTE_NAME)
