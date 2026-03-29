@@ -4,6 +4,8 @@ Public API remains available from this module while implementations are split
 into smaller files to keep each file maintainable.
 """
 
+from __future__ import annotations
+
 from project.core.analysis import VoteAnalysisService
 from project.core.storage import VoteCoreSystem
 
