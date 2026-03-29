@@ -133,8 +133,17 @@ class VoteCoreSystem:
     def get_vote_config(self, uuid: str) -> VoteConfig | None:
         return self.vote_configs.get(uuid)
 
-    def create_vote(self, name: str, options: set[str]) -> str:
-        uuid = str(uuid4())
+    def create_vote(
+        self,
+        name: str,
+        options: set[str],
+        *,
+        rounds: dict[str, VoteRoundConfig] | None = None,
+        uuid: str | None = None,
+    ) -> str:
+        if uuid is None:
+            uuid = str(uuid4())
+
         file_slug = uuid.replace("-", "")[:12]
         default_round_uuid = str(uuid4())
         now = datetime.now(UTC)
@@ -146,13 +155,17 @@ class VoteCoreSystem:
             options=set(options),
             start_time=default_start,
             end_time=default_end,
-            rounds={
+            rounds=rounds
+            or {
                 default_round_uuid: VoteRoundConfig(
-                    name="第1輪", start_time=default_start, end_time=default_end
+                    name="第1輪",
+                    start_time=default_start,
+                    end_time=default_end,
                 ),
             },
             path=Path(f"data/vote_{file_slug}.csv"),
         )
+
         self.vote_configs[uuid] = config
         self.votes[config.path] = CSVManager(config.path, VoteCsvRow)
         self.votes[config.path].ensure_file()
