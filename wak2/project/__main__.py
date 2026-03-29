@@ -58,7 +58,8 @@ if __name__ == "__main__":
     import sys
     from pathlib import Path
 
-    if len(sys.argv) > 1 and sys.argv[1].endswith("--web"):
+    args = set(sys.argv[1:])
+    if "--web" in args:
         import subprocess
 
         import project.web as project_web
