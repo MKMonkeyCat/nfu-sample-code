@@ -77,7 +77,6 @@ if __name__ == "__main__":
         try:
             subprocess.run(cmd, check=True)
         except KeyboardInterrupt:
-            # 捕捉 Ctrl+C 正常退出
             pass
     else:
         main()
