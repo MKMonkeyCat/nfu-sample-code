@@ -12,7 +12,7 @@ from project.utils.streamlit_ui import render_callout, render_page_intro
 
 
 def _render_home(service: VoteCoreService) -> None:
-    render_page_intro("眾數應用互動遊戲系統", "")
+    render_page_intro("投票系統", "")
 
     left_col, right_col = st.columns([1.4, 1])
     with left_col:
