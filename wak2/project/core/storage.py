@@ -86,9 +86,7 @@ class VoteRoundConfig:
 
 
 def _is_time_in_window(now: datetime, start_time: str, end_time: str) -> bool:
-    start_dt = parse_iso_datetime(start_time)
-    end_dt = parse_iso_datetime(end_time)
-    return start_dt <= now <= end_dt
+    return parse_iso_datetime(start_time) <= now <= parse_iso_datetime(end_time)
 
 
 class VoteCoreSystem:
@@ -120,6 +118,7 @@ class VoteCoreSystem:
             try:
                 if not isinstance(config_data, dict):
                     raise ValueError("config entry must be object")
+
                 config = VoteConfig.from_dict(config_data)
                 self.vote_configs[uuid] = config
                 self.votes[config.path] = CSVManager(config.path, VoteCsvRow)
@@ -272,15 +271,18 @@ class VoteCoreSystem:
         config = self.vote_configs.get(uuid)
         if config is None:
             return round_uuid
+
         round_config = config.rounds.get(round_uuid)
         if round_config is None:
             return round_uuid
+
         return round_config.name
 
     def add_vote_record(self, uuid: str, voter_name: str, option: str, round_name: str | None = None) -> None:
         config = self.vote_configs.get(uuid)
         if config is None:
             raise ValueError("Vote config not found")
+
         normalized_option = option.strip()
         if normalized_option not in config.options:
             raise ValueError("Option not allowed in this vote")
@@ -327,7 +329,8 @@ class VoteCoreSystem:
         return records
 
     def save_vote_configs(self, config_path: Path) -> None:
-        data = {}
+        data: dict[str, dict] = {}
+
         for uuid, config in self.vote_configs.items():
             data[uuid] = {
                 "name": config.name,
@@ -344,5 +347,6 @@ class VoteCoreSystem:
                     for round_uuid, round_config in config.rounds.items()
                 },
             }
+
         config_path.parent.mkdir(parents=True, exist_ok=True)
-        config_path.write_text(json.dumps(data, ensure_ascii=False, indent=4), encoding="utf-8")
+        config_path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
