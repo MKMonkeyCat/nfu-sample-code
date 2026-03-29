@@ -48,3 +48,7 @@ def run_web() -> None:
         render_vote(service)
     else:
         render_analyze(service)
+
+
+if __name__ == "__main__":
+    run_web()
