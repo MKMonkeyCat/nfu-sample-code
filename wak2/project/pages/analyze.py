@@ -223,7 +223,7 @@ def _render_analysis_fragment(
     st.markdown(
         f"""
         <div class="analyze-summary">
-            <div class="analyze-summary-title">結論 (自動更新中: {datetime.now().strftime('%H:%M:%S')})</div>
+            <div class="analyze-summary-title">結論</div>
             <div class="analyze-summary-value">{html.escape(mode_sentence)}</div>
         </div>
         """,
@@ -299,7 +299,7 @@ def _render_analysis_fragment(
 
 def render(service: VoteCoreService) -> None:
     _inject_page_style()
-    render_page_intro("分析頁", "圖表與數據將每 3 秒自動更新")
+    render_page_intro("分析頁", "")
 
     configs = service.storage.list_vote_configs()
     if not configs:
