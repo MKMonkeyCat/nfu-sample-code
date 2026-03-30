@@ -15,12 +15,12 @@ class VoteRecord(NamedTuple):
 class SummaryData(NamedTuple):
     """Summary data structure for vote statistics."""
 
-    total: int
-    counts: dict[str, int]
-    modes: list[str]
-    mode_count: int
-    least: list[str]
-    least_count: int
+    total: int  # 總票數
+    counts: dict[str, int]  # 選項票數
+    modes: list[str]  # 眾數選項
+    mode_count: int  # 眾數票數
+    least: list[str]  # 最少票選項
+    least_count: int  # 最少票數
 
 
 class StatisticsData(NamedTuple):
