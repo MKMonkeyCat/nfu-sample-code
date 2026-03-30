@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import html
+import time
 from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
@@ -193,44 +194,15 @@ def _summarize_round(records: list[VoteRecord], round_id: str) -> dict[str, Any]
     return {"modes": modes, "mode_count": mode_count}
 
 
-def render(service: VoteCoreService) -> None:
-    _inject_page_style()
-    render_page_intro("分析頁", "切換投票主題與輪次後，統計、明細與圖表會一起更新")
-
-    configs = service.storage.list_vote_configs()
-    if not configs:
-        render_empty_state("目前沒有投票活動，請先到管理頁建立")
-        return
-
-    filter_col1, filter_col2 = st.columns([2, 1])
-    with filter_col1:
-        vote_uuid = st.selectbox(
-            "選擇投票主題",
-            options=[uuid for uuid, _ in configs],
-            format_func=lambda item: f"{service.storage.vote_configs[item].name} ({item[:8]})",
-        )
-
+@st.fragment(run_every=3.0)
+def _render_analysis_fragment(
+    service: VoteCoreService, vote_uuid: str, selected_round: str, config: VoteConfig
+):
     all_records = service.storage.read_vote_records(vote_uuid)
-    config = service.storage.get_vote_config(vote_uuid)
-    if not config:
-        render_empty_state(f"找不到投票設定：{vote_uuid}", level="error")
-        return
 
     if not all_records:
         render_empty_state("目前沒有投票資料", hint="先到投票頁累積資料，這裡才會顯示統計", level="warning")
         return
-
-    round_ids = sorted(
-        {str(record.round) for record in all_records}, key=lambda value: _round_sort_key(config, value)
-    )
-    with filter_col2:
-        selected_round = st.selectbox(
-            "輪次篩選",
-            options=[ALL_ROUNDS_VALUE, *round_ids],
-            format_func=lambda value: (
-                "全部輪次" if value == ALL_ROUNDS_VALUE else _round_display_name(config, str(value))
-            ),
-        )
 
     records = (
         all_records
@@ -252,7 +224,7 @@ def render(service: VoteCoreService) -> None:
     st.markdown(
         f"""
         <div class="analyze-summary">
-            <div class="analyze-summary-title">結論</div>
+            <div class="analyze-summary-title">結論 (自動更新中: {datetime.now().strftime('%H:%M:%S')})</div>
             <div class="analyze-summary-value">{html.escape(mode_sentence)}</div>
         </div>
         """,
@@ -306,11 +278,11 @@ def render(service: VoteCoreService) -> None:
         vote_rows = service.analysis.vote_rows(records)
         mapped_vote_rows: list[dict[str, Any]] = []
         for row in vote_rows:
-            round_uuid = str(row.get("round_name", ""))
+            round_uuid_row = str(row.get("round_name", ""))
             mapped_vote_rows.append(
                 {
                     **row,
-                    "round_name": _round_display_name(config, round_uuid),
+                    "round_name": _round_display_name(config, round_uuid_row),
                 }
             )
         st.dataframe(mapped_vote_rows, width="stretch", hide_index=True)
@@ -324,3 +296,47 @@ def render(service: VoteCoreService) -> None:
 
         if selected_round == ALL_ROUNDS_VALUE:
             _render_line_chart_by_round(all_records, config)
+
+
+def render(service: VoteCoreService) -> None:
+    _inject_page_style()
+    render_page_intro("分析頁", "圖表與數據將每 3 秒自動更新")
+
+    configs = service.storage.list_vote_configs()
+    if not configs:
+        render_empty_state("目前沒有投票活動，請先到管理頁建立")
+        return
+
+    # 篩選控制項 (放在 Fragment 之外，避免使用者操作選單時被自動重新整理中斷)
+    filter_col1, filter_col2 = st.columns([2, 1])
+    with filter_col1:
+        vote_uuid = st.selectbox(
+            "選擇投票主題",
+            options=[uuid for uuid, _ in configs],
+            format_func=lambda item: f"{service.storage.vote_configs[item].name} ({item[:8]})",
+        )
+
+    config = service.storage.get_vote_config(vote_uuid)
+    if not config:
+        render_empty_state(f"找不到投票設定：{vote_uuid}", level="error")
+        return
+
+    # 先獲取一次數據以確定輪次選單內容
+    all_records_init = service.storage.read_vote_records(vote_uuid)
+    round_ids = sorted(
+        {str(record.round) for record in all_records_init}, key=lambda value: _round_sort_key(config, value)
+    )
+
+    with filter_col2:
+        selected_round = st.selectbox(
+            "輪次篩選",
+            options=[ALL_ROUNDS_VALUE, *round_ids],
+            format_func=lambda value: (
+                "全部輪次" if value == ALL_ROUNDS_VALUE else _round_display_name(config, str(value))
+            ),
+        )
+
+    st.divider()
+
+    # 呼叫自動更新片段
+    _render_analysis_fragment(service, vote_uuid, selected_round, config)
