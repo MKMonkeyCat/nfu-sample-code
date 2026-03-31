@@ -92,11 +92,11 @@ def _render_bar_chart(counts: dict[str, int], modes: list[str]) -> None:
     values = list(counts.values())
     colors = ["#e63946" if label in modes else "#457b9d" for label in labels]
 
-    fig, ax = plt.subplots(figsize=(8, 4))
+    fig, ax = plt.subplots(figsize=(8, 8.18))
     ax.bar(labels, values, color=colors)
-    ax.set_title("選項票數分布")
-    ax.set_xlabel("選項")
-    ax.set_ylabel("票數")
+    ax.set_title("選項票數分布", fontsize=16)
+    ax.set_xlabel("選項", fontsize=14)
+    ax.set_ylabel("票數", fontsize=14)
     st.pyplot(fig)
     plt.close(fig)
 
