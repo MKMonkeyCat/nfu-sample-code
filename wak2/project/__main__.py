@@ -28,7 +28,7 @@ def main() -> None:
         info = input("請輸入投票資訊（格式：姓名 選項）or end：").strip()
         if info == "end":
             print("-" * 41)
-            print("投效人\t選項\t投票時間")
+            print("投票人\t選項\t投票時間")
 
             records = service.storage.read_vote_records(DEFAULT_VOTE_CONFIG_UUID)
             for record in records:
