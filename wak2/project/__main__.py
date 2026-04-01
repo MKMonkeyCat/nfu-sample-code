@@ -39,6 +39,9 @@ def main() -> None:
             print(f"總人數：{statistics.total}")
             print(f"眾數：{', '.join(statistics.modes)}")
             print(f"最少選項：{', '.join(statistics.least)}")
+            print(
+                f"選項分布：{', '.join(f'{option}: {count}' for option, count in statistics.counts.items())}"
+            )
             break
 
         try:
